@@ -106,52 +106,6 @@ class SBatchScript:
         return config
 
 
-_skeleton = """#!/usr/bin/env bash
-
-{slurm_options}
-
-echo "Working on node `hostname`."
-
-echo 'Create working directory:'
-workdir="slurm_job_$SLURM_JOB_NAME"
-mkdir -v $workdir
-cd $workdir
-
-executable={executable}
-transfer_executable={transfer_executable}
-
-if [ "$transfer_executable" = "true" ]
-then
-    echo 'Transfer executable to node:'
-    cp -v $executable .
-    executable=./`basename $executable`
-fi
-
-inputfiles=({transfer_input_files})
-
-echo 'Transfer input files to node:'
-for inputfile in ${{inputfiles[*]}}
-do
-    cp -v $inputfile .
-done
-
-echo 'Execute...'
-$executable {arguments}
-
-outputfiles=({transfer_output_files})
-
-echo 'Transfer output files:'
-for outputfile in ${{outputfiles[*]}}
-do
-    mv -v `basename $outputfile` $outputfile
-done
-
-echo 'Remove working directory:'
-cd ..
-rm -rv $workdir
-"""
-
-
 # ---Macro support-------------------------------------------------------------
 class SBatchScriptMacro:
     """Macro support for Slurm batch script
@@ -203,3 +157,50 @@ class SBatchScriptMacro:
 
     # Use the same doc string as for SBatchScript.__str__.
     __str__.__doc__ = SBatchScript.__str__.__doc__
+
+
+# ---Batch script skeleton-----------------------------------------------------
+_skeleton = """#!/usr/bin/env bash
+
+{slurm_options}
+
+echo "Working on node `hostname`."
+
+echo 'Create working directory:'
+workdir="slurm_job_$SLURM_JOB_NAME"
+mkdir -v $workdir
+cd $workdir
+
+executable={executable}
+transfer_executable={transfer_executable}
+
+if [ "$transfer_executable" = "true" ]
+then
+    echo 'Transfer executable to node:'
+    cp -v $executable .
+    executable=./`basename $executable`
+fi
+
+inputfiles=({transfer_input_files})
+
+echo 'Transfer input files to node:'
+for inputfile in ${{inputfiles[*]}}
+do
+    cp -v $inputfile .
+done
+
+echo 'Execute...'
+$executable {arguments}
+
+outputfiles=({transfer_output_files})
+
+echo 'Transfer output files:'
+for outputfile in ${{outputfiles[*]}}
+do
+    mv -v `basename $outputfile` $outputfile
+done
+
+echo 'Remove working directory:'
+cd ..
+rm -rv $workdir
+"""
