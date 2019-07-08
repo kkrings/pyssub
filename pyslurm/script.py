@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""Module containing a class that represents a single-task Slurm batch
-script.
+"""Module containing a class representing a Slurm batch script
 
 """
-import os
-from typing import Any, Dict, List
 
 
 # ---Slurm batch script--------------------------------------------------------
@@ -33,38 +30,21 @@ class SBatchScript:
         Sequence of output files that are moved after
         executing `executable`
 
-    Examples
-    --------
-    Create a simple Slurm batch script.
-
-    >>> import pyslurm
-    >>> script = pyslurm.script.SBatchScript("echo", "'Hello World!'")
-
     """
-    def __init__(self, executable: str, arguments: str = "") -> None:
-        """Initialize new instance.
-
-        Parameters
-        ----------
-        executable : str
-            Path to executable
-        arguments : str, optional
-            Arguments that will be passed to `executable`
-
-        """
+    def __init__(self, executable, arguments=""):
         # Executable and arguments
         self.executable: str = executable
         self.arguments: str = arguments
 
         # Slurm sbatch options
-        self.options: Dict[str, Any] = {"ntasks": 1}
+        self.options = {"ntasks": 1}
 
         # File transfer mechanism
-        self.transfer_executable: bool = False
-        self.transfer_input_files: List[str] = []
-        self.transfer_output_files: List[str] = []
+        self.transfer_executable = False
+        self.transfer_input_files = []
+        self.transfer_output_files = []
 
-    def __str__(self) -> str:
+    def __str__(self):
         """String representation of Slurm batch script
 
         The string representation of the Slurm batch script can be used
@@ -76,87 +56,28 @@ class SBatchScript:
             String representation of Slurm batch script
 
         """
-        return _skeleton.format(**self._config)
-
-    @property
-    def _config(self) -> Dict[str, str]:
-        """dict(str, str): Keyword arguments for `_skeleton.format`
-        """
-        config = {
-            "executable": "'{}'".format(self.executable),
-            "arguments": self.arguments,
-            "transfer_executable": str(self.transfer_executable).lower()
-            }
-
         # Make sure that this a single-task job.
         self.options["ntasks"] = 1
 
-        config["slurm_options"] = "\n".join(
-            "#SBATCH --{key}={val}".format(key=key, val=val)
-            for key, val in self.options.items())
+        slurm_options = "\n".join(
+            "#SBATCH --{key}={value}".format(key=k, value=v)
+            for k, v in self.options.items())
 
-        config["transfer_input_files"] = " ".join(
-            "'{}'".format(os.path.abspath(f))
-            for f in self.transfer_input_files)
+        transfer_input_files = " ".join(
+            "'{}'".format(f) for f in self.transfer_input_files)
 
-        config["transfer_output_files"] = " ".join(
-            "'{}'".format(os.path.abspath(f))
-            for f in self.transfer_output_files)
+        transfer_output_files = " ".join(
+            "'{}'".format(f) for f in self.transfer_output_files)
 
-        return config
+        script = _skeleton.format(
+            slurm_options=slurm_options,
+            executable=self.executable,
+            arguments=self.arguments,
+            transfer_executable=str(self.transfer_executable).lower(),
+            transfer_input_files=transfer_input_files,
+            transfer_output_files=transfer_output_files)
 
-
-# ---Macro support-------------------------------------------------------------
-class SBatchScriptMacro:
-    """Macro support for Slurm batch script
-
-    This class allows to insert macros into a Slurm batch script. The
-    macro support is based on Python string formats.
-
-    Attributes
-    ----------
-    script : SBatchScript
-        Slurm batch script
-    macros : dict(str, object)
-        Mapping of macro names to objects representing values
-
-    Examples
-    --------
-    Create a simple Slurm batch script with a single macro.
-
-    >>> import pyslurm
-    >>> script = pyslurm.script.SBatchScript("echo", "{message}")
-    >>> macros = {"message": "'Hello World!'"}
-    >>> script = pyslurm.script.SBatchScriptMacro(script, macros)
-
-    """
-    def __init__(self, script: SBatchScript,
-                 macros: Dict[str, Any] = {}) -> None:
-        """Initialize new instance.
-
-        Parameters
-        ----------
-        script : SBatchScript
-            Slurm batch script
-        macros : dict(str, object), optional
-            Mapping of macro names to objects representing values
-
-        """
-        self.script: SBatchScript = script
-        self.macros: Dict[str, Any] = dict(macros)
-
-    def __str__(self) -> str:
-        # Insert macros into keyword arguments that are passed to
-        # _skeleton.format.
-        config = {
-            key: value.format(**self.macros)
-            for key, value in self.script._config.items()
-            }
-
-        return _skeleton.format(**config)
-
-    # Use the same doc string as for SBatchScript.__str__.
-    __str__.__doc__ = SBatchScript.__str__.__doc__
+        return script
 
 
 # ---Batch script skeleton-----------------------------------------------------
