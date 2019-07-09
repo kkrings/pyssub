@@ -75,7 +75,7 @@ class SBatch:
         """
         # Save script to disk.
         options = {
-            "encoding": "w",
+            "mode": "w",
             "prefix": "pyslurm_",
             "suffix": ".sh",
             "delete": False
