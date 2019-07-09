@@ -6,6 +6,7 @@
 import os
 import re
 import subprocess
+import tempfile
 import time
 
 
@@ -14,20 +15,17 @@ class SBatch:
 
     This class allows the successive submission of a sequence of batch
     scripts into the Slurm queue, checking that not more jobs
-    than `maxjobs` are queuing.
+    than `nmax` are queuing.
 
     Attributes
     ----------
-    directory : str
-        Path to directory for temporarily saving scripts to disk
-    maxjobs : int
+    nmax : int
         Maximum allowed number of queuing jobs
     wait : int
         Number of seconds before next submission
 
     """
-    def __init__(self, directory, nmax=1000, wait=120):
-        self.directory = directory
+    def __init__(self, nmax=1000, wait=120):
         self.nmax = nmax
         self.wait = wait
 
@@ -58,7 +56,8 @@ class SBatch:
 
         return jobids
 
-    def submit(self, script, partition=None):
+    @staticmethod
+    def submit(script, partition=None):
         """Submit Slurm batch script.
 
         Parameters
@@ -75,17 +74,22 @@ class SBatch:
 
         """
         # Save script to disk.
-        scriptfile = os.path.join(self.directory, "slurmjob.sh")
+        options = {
+            "encoding": "w",
+            "prefix": "pyslurm_",
+            "suffix": ".sh",
+            "delete": False
+            }
 
-        with open(scriptfile, "w") as stream:
-            stream.write(script)
+        with tempfile.NamedTemporaryFile(**options) as scriptfile:
+            scriptfile.write(script)
 
         command = ["sbatch"]
 
         if partition is not None:
             command.extend(["-p", partition])
 
-        command.append(scriptfile)
+        command.append(scriptfile.name)
 
         process = subprocess.run(
             command,
@@ -100,7 +104,7 @@ class SBatch:
             process.stdout)
 
         # Remove script from disk.
-        os.remove(scriptfile)
+        os.remove(scriptfile.name)
 
         return int(match.group("jobid"))
 
