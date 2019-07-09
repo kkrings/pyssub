@@ -36,42 +36,42 @@ class SBatch:
 
         Parameters
         ----------
-        scripts : list(SBatchScript)
-            Sequence of Slurm batch scripts
+        scripts : dict(str, SBatchScript)
+            Mapping of job names to batch scripts
         partition : str, optional
-            Request the given partition.
+            Partition for resource allocation
 
         """
         userid = os.getuid()
 
-        scripts = list(scripts)
-        jobids = []
+        scripts = dict(scripts)
+        jobids = {}
 
         while len(scripts) > 0:
             nnew = self.nmax - self.njobs(userid, partition)
 
             for _ in range(nnew):
-                jobid = self.submit(scripts.pop())
-                jobids.append(jobid)
+                name, script = scripts.popitem()
+                jobids[name] = self.submit(script, partition)
 
             time.sleep(self.wait)
 
         return jobids
 
     def submit(self, script, partition=None):
-        """Submit batch script to Slurm.
+        """Submit Slurm batch script.
 
         Parameters
         ----------
         script : Script
             Batch script
         partition : str, optional
-            Request the given partition.
+            Partition for resource allocation
 
         Returns
         -------
         int
-            Slurm job ID
+            Job ID
 
         """
         # Save script to disk.
