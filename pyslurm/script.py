@@ -177,8 +177,8 @@ class SBatchScriptDict(collections.abc.MutableMapping):
     scripts for later submission.
 
     """
-    def __init__(self):
-        self._config = configparser.ConfigParser()
+    def __init__(self, config=configparser.ConfigParser()):
+        self._config = config
 
     def __getitem__(self, name):
         """Load Slurm batch script.
