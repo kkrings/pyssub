@@ -40,7 +40,7 @@ class SBatch:
             Partition for resource allocation
 
         """
-        userid = os.getuid()
+        userid = str(os.getuid())
 
         scripts = dict(scripts)
         jobids = {}
@@ -93,7 +93,6 @@ class SBatch:
 
         process = subprocess.run(
             command,
-            shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=True,
@@ -117,7 +116,7 @@ class SBatch:
 
         Parameters
         ----------
-        user : str or int
+        user : str
             User name or ID
         partition : str, optional
             Partition name
@@ -135,7 +134,6 @@ class SBatch:
 
         process = subprocess.run(
             command,
-            shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=True,
@@ -162,7 +160,6 @@ class SBatch:
         """
         process = subprocess.run(
             ["sacct", "-j", jobid, "-o", "state", "-n"],
-            shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=True,
