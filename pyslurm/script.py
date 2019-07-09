@@ -172,9 +172,9 @@ class SBatchScript:
 class SBatchScriptDict(collections.abc.MutableMapping):
     """Slurm batch script mapping
 
-    This class can be used to define and save a collection of Slurm jobs
-    for later submission. It represents a mapping of job names to Slurm
-    batch scripts.
+    This class represents a mapping of job names to Slurm batch scripts.
+    It can be used to define and save a collection of Slurm batch
+    scripts for later submission.
 
     """
     def __init__(self):
