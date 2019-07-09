@@ -13,4 +13,4 @@ setuptools.setup(
     url="https://github.com/kkrings/pyslurm/",
     license="GPLv3",
     packages=setuptools.find_packages(),
-    scripts=["scripts/pyslurm.py"])
+    scripts=["bin/pyslurm_submit"])
