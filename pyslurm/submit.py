@@ -82,7 +82,7 @@ class SBatch:
             }
 
         with tempfile.NamedTemporaryFile(**options) as scriptfile:
-            scriptfile.write(script)
+            scriptfile.write(str(script))
 
         command = ["sbatch"]
 
