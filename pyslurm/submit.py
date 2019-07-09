@@ -46,7 +46,7 @@ class SBatch:
         jobids = {}
 
         while len(scripts) > 0:
-            nnew = self.nmax - self.njobs(userid, partition)
+            nnew = min(self.nmax - self.njobs(userid, partition), len(scripts))
 
             for _ in range(nnew):
                 name, script = scripts.popitem()
