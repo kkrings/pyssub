@@ -12,4 +12,5 @@ setuptools.setup(
     description="Simple Python interface to Slurm",
     url="https://github.com/kkrings/pyslurm/",
     license="GPLv3",
-    packages=setuptools.find_packages())
+    packages=setuptools.find_packages(),
+    scripts=["scripts/pyslurm.py"])
