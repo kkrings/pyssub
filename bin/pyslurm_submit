@@ -20,7 +20,7 @@ def main(inputfile, nmax=1000, wait=120, partition=None):
 
     # Submit Slurm batch scripts.
     scripts = dict(pyslurm.script.SBatchScriptDict(config))
-    submitter.run(scripts, partition)
+    submitter(scripts, partition)
 
 
 if __name__ == "__main__":
