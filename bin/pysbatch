@@ -5,21 +5,14 @@
 not more jobs than `nmax` are queuing.
 
 """
-import configparser
-
-import pyslurm.script
-import pyslurm.submit
+import pyslurm.sbatch
 
 
 def main(inputfile, nmax=1000, wait=120, partition=None):
-    submitter = pyslurm.submit.SBatch(nmax, wait)
+    submitter = pyslurm.sbatch.SBatch(nmax, wait)
 
-    # Load Slurm batch scripts from disk.
-    config = configparser.ConfigParser()
-    config.read(inputfile)
-
-    # Submit Slurm batch scripts.
-    scripts = dict(pyslurm.script.SBatchScriptDict(config))
+    # Load Slurm batch scripts from disk and submit them.
+    scripts = pyslurm.sbatch.load(inputfile)
     submitter(scripts, partition)
 
 
