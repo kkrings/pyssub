@@ -112,7 +112,7 @@ class SBatchScriptMacro:
         description = self.script._description
 
         description = {
-            k: v.format(self.macros)
+            k: v.format(macros=self.macros)
             for k, v in description.items()
             }
 
@@ -128,13 +128,13 @@ def load(filename):
 
     .. code-block:: ini
 
-        [options]
-        ntasks = 1
-
         [executable]
         command = command name or path to executable
         arguments = arguments the executable takes
         transfer_executable = False
+
+        [options]
+        ntasks = 1
 
         # Optional file transfer: list input files
         [transfer_input_files]
@@ -264,7 +264,7 @@ done
 echo 'Execute...'
 $executable {descr[arguments]}
 
-outputfiles=({descr[transfer_output_files}])
+outputfiles=({descr[transfer_output_files]})
 
 echo 'Transfer output files:'
 for outputfile in ${{outputfiles[*]}}
