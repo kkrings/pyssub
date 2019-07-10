@@ -3,17 +3,21 @@
 """Module containing a class for submitting Slurm batch scripts
 
 """
+import configparser
 import os
 import re
 import subprocess
 import tempfile
 import time
 
+from . import sbatchscript
 
+
+# ---Submitting Slurm batch scripts--------------------------------------------
 class SBatch:
     """Slurm batch script submitter
 
-    This class allows the successive submission of a sequence of batch
+    This class allows the successive submission of a collection of
     scripts into the Slurm queue, checking that not more jobs
     than `nmax` are queuing.
 
@@ -35,7 +39,7 @@ class SBatch:
         Parameters
         ----------
         scripts : dict(str, SBatchScript)
-            Mapping of job names to batch scripts
+            Mapping of job names to Slurm batch scripts
         partition : str, optional
             Partition for resource allocation
 
@@ -62,8 +66,8 @@ class SBatch:
 
         Parameters
         ----------
-        script : Script
-            Batch script
+        script : SBatchScript
+            Slurm batch script
         partition : str, optional
             Partition for resource allocation
 
@@ -150,7 +154,7 @@ class SBatch:
         Parameters
         ----------
         jobid : int
-            Slurm job ID
+            Job ID
 
         Returns
         -------
@@ -174,3 +178,52 @@ class SBatch:
             return "SUCCESS"
 
         return "FAILED"
+
+
+# --Loading Slurm batch scripts------------------------------------------------
+def load(filename):
+    """Load Slurm batch scripts from disk.
+
+    Load collection of Slurm batch scripts from disk based on Python's
+    simple configuration language:
+
+    .. code-block:: ini
+
+        [Name of 1st job]
+        script = path to saved Slurm batch script
+
+        # Macros are optional.
+        name of 1st macro = value of 1st macro
+        name of 2nd macro = value of 2nd macro
+
+        [Name of 2nd job]
+        script = path to saved Slurm batch script
+
+    Parameters
+    ----------
+    filename : str
+        Path to saved collection of Slurm batch scripts
+
+    Returns
+    -------
+    dict(str, SBatchScriptMacro)
+        Mapping of job names to Slurm batch scripts
+
+    Notes
+    -----
+    The extended interpolation feature of Python's simple configuration
+    language is enabled.
+
+    """
+    description = configparser.ConfigParser(
+        interpolation=configparser.ExtendedInterpolation())
+
+    description.read(filename)
+
+    scripts = {}
+    for name in description.sections():
+        macros = dict(description[name])
+        script = sbatchscript.load(macros.pop("script"))
+        scripts[name] = sbatchscript.SBatchScriptMacro(script, macros)
+
+    return scripts
