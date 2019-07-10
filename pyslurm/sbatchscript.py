@@ -119,7 +119,7 @@ class SBatchScriptMacro:
         return _skeleton.format(descr=description)
 
 
-# --Loading and saving Slurm batch scripts-------------------------------------
+# --Loading and saving Slurm batch script--------------------------------------
 def load(filename):
     """Load Slurm batch script from disk.
 
@@ -132,14 +132,22 @@ def load(filename):
         ntasks = 1
 
         [executable]
-        command = echo
-        arguments = 'Hello World!'
+        command = command name or path to executable
+        arguments = arguments the executable takes
         transfer_executable = False
 
-    Input and output files for the transfer mechanism can be listed in
-    the sections ``transfer_input_files`` and ``transfer_output_files``,
-    respectively. The ``command`` option in the ``executable`` section
-    is the only mandatory one.
+        # Optional file transfer: list input files
+        [transfer_input_files]
+        path to 1st input file
+        path to 2nd input file
+
+        # Optional file transfer: list output files
+        [transfer_output_files]
+        path to 1st output file
+        path to 2nd output file
+
+    The ``command`` option in the ``executable`` section is the only
+    mandatory one.
 
     Parameters
     ----------
