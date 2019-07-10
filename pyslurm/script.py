@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""Module containing a class representing a Slurm batch script
+"""Module containing classes representing a Slurm batch script
 
 """
-import collections.abc
 import configparser
 
 
@@ -22,7 +21,7 @@ class SBatchScript:
     arguments : str
         Arguments that will be passed to `executable`
     options : dict(str, object)
-        Mapping of Slurm sbatch options to objects representing values
+        Mapping of sbatch options to objects representing values
     transfer_executable : bool
         Transfer `executable` to node
     transfer_input_files : list(str)
@@ -47,21 +46,18 @@ class SBatchScript:
         self.transfer_output_files = []
 
     def __str__(self):
-        """String representation of Slurm batch script
+        """Script's string representation"""
+        return _skeleton.format(descr=self._description)
 
-        The string representation of the Slurm batch script can be used
-        to dump the script into a file.
-
-        Returns
-        -------
-        str
-            String representation of Slurm batch script
-
+    @property
+    def _description(self):
+        """dict(str, str): Script's description; will be inserted
+        into `_skeleton` when script's string representation is called.
         """
         # Make sure that this a single-task job.
         self.options["ntasks"] = 1
 
-        slurm_options = "\n".join(
+        options = "\n".join(
             "#SBATCH --{key}={value}".format(key=k, value=v)
             for k, v in self.options.items())
 
@@ -71,214 +67,166 @@ class SBatchScript:
         transfer_output_files = " ".join(
             "'{}'".format(f) for f in self.transfer_output_files)
 
-        script = _skeleton.format(
-            slurm_options=slurm_options,
-            executable=self.executable,
-            arguments=self.arguments,
-            transfer_executable=str(self.transfer_executable).lower(),
-            transfer_input_files=transfer_input_files,
-            transfer_output_files=transfer_output_files)
-
-        return script
-
-    @classmethod
-    def load(cls, config):
-        """Load Slurm batch script from disk.
-
-        Load Slurm batch script from disk based on Python's simple
-        configuration language:
-
-        .. code-block:: ini
-
-            [options]
-            ntasks = 1
-
-            [executable]
-            command = echo
-            arguments = 'Hello World!'
-            transfer_executable = false
-
-        Input and output files for the transfer mechanism can be listed
-        in ``transfer_input_files`` and ``transfer_output_files``,
-        respectively.
-
-        Parameters
-        ----------
-        config : ConfigParser
-            Description of Slurm batch script
-
-        Returns
-        -------
-        SBatchScript
-            Slurm batch script
-
-        """
-        script = cls(
-            executable=config["executable"]["command"],
-            arguments=config["executable"]["arguments"])
-
-        script.options.update(config["options"])
-
-        script.transfer_executable = config.getboolean(
-            "executable", "transfer_executable")
-
-        if "transfer_input_files" in config:
-            script.transfer_input_files.extend(
-                config["transfer_input_files"])
-
-        if "transfer_output_files" in config:
-            script.transfer_output_files.extend(
-                config["transfer_output_files"])
-
-        return script
-
-    def save(self, filename):
-        """Save Slurm batch script to disk.
-
-        Save Slurm batch script to disk based on Python's simple
-        configuration language.
-
-        Parameters
-        ----------
-        filename : str
-            Path to output file
-
-        """
-        config = configparser.ConfigParser(allow_no_value=True)
-
-        config["options"] = self.options
-
-        config["executable"] = {
-            "command": self.executable,
+        description = {
+            "options": options,
+            "executable": self.executable,
             "arguments": self.arguments,
-            "transfer_executable": self.transfer_executable
+            "transfer_executable": str(self.transfer_executable).lower(),
+            "transfer_input_files": transfer_input_files,
+            "transfer_output_files": transfer_output_files
             }
 
-        if len(self.transfer_input_files) > 0:
-            config["transfer_input_files"] = {
-                f: None for f in self.transfer_input_files
-                }
-
-        if len(self.transfer_output_files) > 0:
-            config["transfer_output_files"] = {
-                f: None for f in self.transfer_output_files
-                }
-
-        with open(filename, "w") as stream:
-            config.write(stream)
+        return description
 
 
-# ---Slurm batch script mapping------------------------------------------------
-class SBatchScriptDict(collections.abc.MutableMapping):
-    """Slurm batch script mapping
+# ---Slurm batch script with macro support-------------------------------------
+class SBatchScriptMacro:
+    """Slurm batch script with macro support
 
-    This class represents a mapping of job names to Slurm batch scripts.
-    It can be used to define and save a collection of Slurm batch
-    scripts for later submission.
+    The macro support allows to put variables (macros) into the script
+    and to reuse it for different values. The macro support is based on
+    Python's format specification mini-language.
+
+    Attributes
+    ----------
+    script : SBatchScript
+        Slurm batch script containing macros
+    macros : dict(str, object)
+        Macro values that are inserted into the script when the script's
+        string representation is called.
+
+    Examples
+    --------
+    Create a script with one macro.
+
+    >>> skeleton = SBatchScript("echo", "'{macros[mg]}'")
+    >>> script = SBatchScriptMacro(skeleton, {"msg": "Hello World!"})
 
     """
-    def __init__(self, config=configparser.ConfigParser()):
-        self._config = config
+    def __init__(self, script, macros):
+        self.script = script
+        self.macros = macros
 
-    def __getitem__(self, name):
-        """Load Slurm batch script.
+    def __str__(self):
+        """Script's string representation"""
+        description = self.script._description
 
-        Load the saved Slurm batch script of the specified Slurm job.
+        description = {
+            k: v.format(self.macros)
+            for k, v in description.items()
+            }
 
-        Parameters
-        ----------
-        name : str
-            Job name
+        return _skeleton.format(descr=description)
 
-        Returns
-        -------
-        SBatchScript
-            Slurm batch script
 
-        """
-        macros = dict(self._config[name])
+# --Loading and saving Slurm batch scripts-------------------------------------
+def load(filename):
+    """Load Slurm batch script from disk.
 
-        config = configparser.ConfigParser(
-            interpolation=configparser.ExtendedInterpolation(),
-            allow_no_value=True)
+    Load Slurm batch script from disk based on Python's simple
+    configuration language:
 
-        config.read(macros.pop("script"))
-        config["macros"] = macros
+    .. code-block:: ini
 
-        return SBatchScript.load(config)
+        [options]
+        ntasks = 1
 
-    def add_job(self, name, script, **macros):
-        """Insert Slurm job into mapping.
+        [executable]
+        command = echo
+        arguments = 'Hello World!'
+        transfer_executable = False
 
-        Parameters
-        ----------
-        name : str
-            Job name
-        script : str
-            Path to saved Slurm batch script
-        macros
-            Optional macros
+    Input and output files for the transfer mechanism can be listed in
+    the sections ``transfer_input_files`` and ``transfer_output_files``,
+    respectively. The ``command`` option in the ``executable`` section
+    is the only mandatory one.
 
-        """
-        config = {"script": script}
-        config.update(macros)
-        self._config[name] = config
+    Parameters
+    ----------
+    filename : str
+        Path to saved Slurm batch script
 
-    def __setitem__(self, name, config):
-        """Insert Slurm job into mapping.
+    Returns
+    -------
+    SBatchScript
+        Slurm batch script
 
-        Parameters
-        ----------
-        name : str
-            Job name
-        config : dict
-            Mapping containing the path ``script`` to the saved Slurm
-            batch script; remaining entries are treated as macros.
+    Notes
+    -----
+    The extended interpolation feature of Python's simple configuration
+    language is enabled.
 
-        """
-        macros = dict(config)
-        script = macros.pop("script")
-        self.add(name, script, **macros)
+    """
+    description = configparser.ConfigParser(
+        interpolation=configparser.ExtendedInterpolation(),
+        allow_no_value=True)
 
-    def __delitem__(self, name):
-        """Remove Slurm job from mapping.
+    description.read(filename)
 
-        Parameters
-        ----------
-        name : str
-            Job name
+    script = SBatchScript(
+        executable=description["executable"]["command"],
+        arguments=description["executable"].get("arguments", ""))
 
-        """
-        self._config.pop(name)
+    script.transfer_executable = description["executable"].getboolean(
+        "transfer_executable", False)
 
-    def __len__(self):
-        """Number of Slurm jobs"""
-        return len(self._config.sections())
+    if "options" in description:
+        script.options.update(description["options"])
 
-    def __iter__(self):
-        """Iterate over job names."""
-        return iter(self._config.sections())
+    if "transfer_input_files" in description:
+        script.transfer_input_files.extend(
+            description["transfer_input_files"])
 
-    def save(self, filename):
-        """Save batch script mapping.
+    if "transfer_output_files" in description:
+        script.transfer_output_files.extend(
+            description["transfer_output_files"])
 
-        Save batch script mapping to disk based on Python's simple
-        configuration language.
+    return script
 
-        Parameters
-        ----------
-        filename : str
-            Path to output file
 
-        """
-        with open(filename, "w") as stream:
-            self._config.write(stream)
+def save(script, filename):
+    """Save Slurm batch script to disk.
+
+    Save Slurm batch script to disk based on Python's simple
+    configuration language.
+
+    Parameters
+    ----------
+    script : SBatchScript
+        Slurm batch script
+    filename : str
+        Path to output file
+
+    """
+    description = configparser.ConfigParser(allow_no_value=True)
+
+    description["executable"] = {
+        "command": script.executable,
+        "arguments": script.arguments,
+        "transfer_executable": script.transfer_executable
+        }
+
+    if len(script.options) > 0:
+        description["options"] = script.options
+
+    if len(script.transfer_input_files) > 0:
+        description["transfer_input_files"] = {
+            f: None for f in script.transfer_input_files
+            }
+
+    if len(script.transfer_output_files) > 0:
+        description["transfer_output_files"] = {
+            f: None for f in script.transfer_output_files
+            }
+
+    with open(filename, "w") as stream:
+        description.write(stream)
 
 
 # ---Batch script skeleton-----------------------------------------------------
 _skeleton = """#!/usr/bin/env bash
 
-{slurm_options}
+{descr[options]}
 
 echo "Working on node `hostname`."
 
@@ -287,8 +235,8 @@ workdir="slurm_job_$SLURM_JOB_NAME"
 mkdir -v $workdir
 cd $workdir
 
-executable={executable}
-transfer_executable={transfer_executable}
+executable={descr[executable]}
+transfer_executable={descr[transfer_executable]}
 
 if [ "$transfer_executable" = "true" ]
 then
@@ -297,7 +245,7 @@ then
     executable=./`basename $executable`
 fi
 
-inputfiles=({transfer_input_files})
+inputfiles=({descr[transfer_input_files]})
 
 echo 'Transfer input files to node:'
 for inputfile in ${{inputfiles[*]}}
@@ -306,9 +254,9 @@ do
 done
 
 echo 'Execute...'
-$executable {arguments}
+$executable {descr[arguments]}
 
-outputfiles=({transfer_output_files})
+outputfiles=({descr[transfer_output_files}])
 
 echo 'Transfer output files:'
 for outputfile in ${{outputfiles[*]}}
