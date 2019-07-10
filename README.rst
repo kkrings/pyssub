@@ -1,2 +1,4 @@
-# PySlurm
+PySlurm
+=======
+
 Simple Python interface to Slurm
