@@ -95,7 +95,7 @@ class SBatch:
 
         """
         failed = {}
-        for name, jobid in jobs.items():
+        for name, jobid in list(jobs.items()):
             status = self.status(jobid)
 
             if status != "RUNNING":
