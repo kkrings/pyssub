@@ -57,7 +57,8 @@ class SBatch:
 
         # Successively submit jobs.
         while len(scripts) > 0:
-            nnew = min(self.nmax - self.njobs(userid, partition), len(scripts))
+            nnew = min(
+                self.nmax - self._njobs(userid, partition), len(scripts))
 
             if nnew > 0:
                 # We can submit new jobs. This means some jobs are done. Let's
@@ -66,7 +67,7 @@ class SBatch:
 
             for _ in range(nnew):
                 name, script = scripts.popitem()
-                running[name] = self.submit(script, partition)
+                running[name] = self._submit(script, partition)
 
             time.sleep(self.wait)
 
@@ -96,18 +97,16 @@ class SBatch:
         """
         failed = {}
         for name, jobid in list(jobs.items()):
-            status = self.status(jobid)
-
-            if status != "RUNNING":
+            if not self._running(jobid):
                 jobs.pop(name)
 
-            if status == "FAILED":
-                failed[name] = jobid
+                if not self._success(jobid):
+                    failed[name] = jobid
 
         return failed
 
     @staticmethod
-    def submit(script, partition=None):
+    def _submit(script, partition=None):
         """Submit Slurm batch script.
 
         Parameters
@@ -158,7 +157,7 @@ class SBatch:
         return int(match.group("jobid"))
 
     @staticmethod
-    def njobs(user, partition=None):
+    def _njobs(user, partition=None):
         """Number of queuing jobs
 
         Check the number of queuing jobs for the given `user`
@@ -192,10 +191,10 @@ class SBatch:
         return len(process.stdout.splitlines())
 
     @staticmethod
-    def status(jobid):
-        """Job status
+    def _running(jobid):
+        """Job state
 
-        Check the status of the given Slurm job.
+        Check if the given Slurm job is still running/pending.
 
         Parameters
         ----------
@@ -204,26 +203,49 @@ class SBatch:
 
         Returns
         -------
-        str
-            Job status: 'RUNNING', 'SUCCESS', or 'FAILED'
+        bool
+            Whether the job is still running/pending or not.
 
         """
         process = subprocess.run(
-            ["sacct", "-j", str(jobid), "-o", "state", "-n"],
+            ["sacct", "-j", str(jobid), "-o", "State", "-n"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=True,
             encoding="utf-8")
 
-        status = process.stdout.splitlines()[0].strip()
+        state = process.stdout.splitlines()[0].strip()
 
-        if status == "RUNNING":
-            return status
+        return state in ["RUNNING", "PENDING"]
 
-        if status == "COMPLETED":
-            return "SUCCESS"
+    @staticmethod
+    def _success(jobid):
+        """Job's exit code
 
-        return "FAILED"
+        Check the given job's derived exit code.
+
+        Parameters
+        ----------
+        jobid : int
+            Job ID
+
+        Returns
+        -------
+        bool
+            Whether the job succeeded or failed.
+
+        """
+        process = subprocess.run(
+            ["sacct", "-j", str(jobid), "-o", "DerivedExitcode", "-n"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+            encoding="utf-8")
+
+        code = process.stdout.splitlines[0].strip()
+        code = int(code.split(":")[0])
+
+        return code == 0
 
 
 # --Loading Slurm batch scripts------------------------------------------------
