@@ -262,7 +262,7 @@ do
 done
 
 echo 'Execute...'
-$executable {descr[arguments]}
+srun $executable {descr[arguments]}
 
 outputfiles=({descr[transfer_output_files]})
 
