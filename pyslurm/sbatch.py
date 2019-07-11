@@ -209,7 +209,7 @@ class SBatch:
 
         """
         process = subprocess.run(
-            ["sacct", "-j", jobid, "-o", "state", "-n"],
+            ["sacct", "-j", str(jobid), "-o", "state", "-n"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=True,
