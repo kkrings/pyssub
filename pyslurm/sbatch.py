@@ -43,22 +43,68 @@ class SBatch:
         partition : str, optional
             Partition for resource allocation
 
+        Returns
+        -------
+        dict(str, int)
+            Failed jobs; mapping of job names to job IDs
+
         """
         userid = str(os.getuid())
-
         scripts = dict(scripts)
-        jobids = {}
 
+        running = {}
+        failed = {}
+
+        # Successively submit jobs.
         while len(scripts) > 0:
             nnew = min(self.nmax - self.njobs(userid, partition), len(scripts))
 
+            if nnew > 0:
+                # We can submit new jobs. This means some jobs are done. Let's
+                # check their status.
+                failed.update(self._status(running))
+
             for _ in range(nnew):
                 name, script = scripts.popitem()
-                jobids[name] = self.submit(script, partition)
+                running[name] = self.submit(script, partition)
 
             time.sleep(self.wait)
 
-        return jobids
+        # Wait for all jobs to finish.
+        while len(running) > 0:
+            failed.update(self._status(running))
+            time.sleep(self.wait)
+
+        return failed
+
+    def _status(self, jobs):
+        """Job status
+
+        Check the status of the given Slurm jobs, remove the completed
+        ones, and return the failed ones.
+
+        Parameters
+        ----------
+        jobs : dict(str, int)
+            Jobs; mapping of job names to job IDs.
+
+        Returns
+        -------
+        dict(str, int)
+            Failed jobs; mapping of job names to job IDs
+
+        """
+        failed = {}
+        for name, jobid in jobs.items():
+            status = self.status(jobid)
+
+            if status != "RUNNING":
+                jobs.pop(name)
+
+            if status == "FAILED":
+                failed[name] = jobid
+
+        return failed
 
     @staticmethod
     def submit(script, partition=None):
