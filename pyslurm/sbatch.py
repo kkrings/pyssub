@@ -62,7 +62,8 @@ class SBatch:
                 name, script = scripts.popitem()
                 jobs[name] = self.submit(script, partition)
 
-            time.sleep(self.wait)
+            if len(scripts) > 0:
+                time.sleep(self.wait)
 
         return jobs
 
