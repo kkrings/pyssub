@@ -5,8 +5,6 @@
 not more jobs than `nmax` are queuing.
 
 """
-import configparser
-
 import pyslurm.sbatch
 
 
@@ -15,15 +13,7 @@ def main(inputfile, nmax=1000, wait=120, partition=None):
 
     # Load Slurm batch scripts from disk and submit them.
     scripts = pyslurm.sbatch.load(inputfile)
-    failed = submitter(scripts, partition)
-
-    # Write failed jobs to a rescue file.
-    if len(failed) > 0:
-        rescue = configparser.ConfigParser()
-        rescue["failed jobs"] = failed
-
-        with open(inputfile + ".rescue", "w") as stream:
-            rescue.write(stream)
+    submitter(scripts, partition)
 
 
 if __name__ == "__main__":

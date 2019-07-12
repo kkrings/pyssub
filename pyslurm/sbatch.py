@@ -46,67 +46,28 @@ class SBatch:
         Returns
         -------
         dict(str, int)
-            Failed jobs; mapping of job names to job IDs
+            Mapping of job names to job IDs
 
         """
-        userid = str(os.getuid())
+        # We do not want to change the given dictionary.
         scripts = dict(scripts)
 
-        running = {}
-        failed = {}
-
-        # Successively submit jobs.
+        jobs = {}
         while len(scripts) > 0:
             nnew = min(
-                self.nmax - self._njobs(userid, partition), len(scripts))
-
-            if nnew > 0:
-                # We can submit new jobs. This means some jobs are done. Let's
-                # check their status.
-                failed.update(self._status(running))
+                self.nmax - self.njobs(str(os.getuid()), partition),
+                len(scripts))
 
             for _ in range(nnew):
                 name, script = scripts.popitem()
-                running[name] = self._submit(script, partition)
+                jobs[name] = self.submit(script, partition)
 
             time.sleep(self.wait)
 
-        # Wait for all jobs to finish.
-        while len(running) > 0:
-            failed.update(self._status(running))
-            time.sleep(self.wait)
-
-        return failed
-
-    def _status(self, jobs):
-        """Job status
-
-        Check the status of the given Slurm jobs, remove the completed
-        ones, and return the failed ones.
-
-        Parameters
-        ----------
-        jobs : dict(str, int)
-            Jobs; mapping of job names to job IDs.
-
-        Returns
-        -------
-        dict(str, int)
-            Failed jobs; mapping of job names to job IDs
-
-        """
-        failed = {}
-        for name, jobid in list(jobs.items()):
-            if not self._running(jobid):
-                jobs.pop(name)
-
-                if not self._success(jobid):
-                    failed[name] = jobid
-
-        return failed
+        return jobs
 
     @staticmethod
-    def _submit(script, partition=None):
+    def submit(script, partition=None):
         """Submit Slurm batch script.
 
         Parameters
@@ -157,7 +118,7 @@ class SBatch:
         return int(match.group("jobid"))
 
     @staticmethod
-    def _njobs(user, partition=None):
+    def njobs(user, partition=None):
         """Number of queuing jobs
 
         Check the number of queuing jobs for the given `user`
@@ -189,63 +150,6 @@ class SBatch:
             encoding="utf-8")
 
         return len(process.stdout.splitlines())
-
-    @staticmethod
-    def _running(jobid):
-        """Job state
-
-        Check if the given Slurm job is still running/pending.
-
-        Parameters
-        ----------
-        jobid : int
-            Job ID
-
-        Returns
-        -------
-        bool
-            Whether the job is still running/pending or not.
-
-        """
-        process = subprocess.run(
-            ["sacct", "-j", str(jobid), "-o", "State", "-n"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=True,
-            encoding="utf-8")
-
-        state = process.stdout.splitlines()[0].strip()
-
-        return state in ["RUNNING", "PENDING"]
-
-    @staticmethod
-    def _success(jobid):
-        """Job's exit code
-
-        Check the given job's derived exit code.
-
-        Parameters
-        ----------
-        jobid : int
-            Job ID
-
-        Returns
-        -------
-        bool
-            Whether the job succeeded or failed.
-
-        """
-        process = subprocess.run(
-            ["sacct", "-j", str(jobid), "-o", "DerivedExitcode", "-n"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=True,
-            encoding="utf-8")
-
-        code = process.stdout.splitlines[0].strip()
-        code = int(code.split(":")[0])
-
-        return code == 0
 
 
 # --Loading Slurm batch scripts------------------------------------------------
