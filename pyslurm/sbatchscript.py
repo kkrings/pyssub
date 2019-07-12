@@ -241,6 +241,19 @@ echo "Working on node `hostname`."
 echo 'Create working directory:'
 workdir="slurm_job_$SLURM_JOB_NAME"
 mkdir -v $workdir
+
+status=$?
+if [ $status -ne 0 ]
+then
+    exit $status
+fi
+
+function cleanup() {{
+    echo 'Remove working directory:'
+    cd ..
+    rm -rv $workdir
+}}
+
 cd $workdir
 
 executable={descr[executable]}
@@ -250,32 +263,57 @@ if [ "$transfer_executable" = "true" ]
 then
     echo 'Transfer executable to node:'
     cp -v $executable .
+
+    status=$?
+    if [ $status -ne 0 ]
+    then
+        cleanup
+        exit $status
+    fi
+
     executable=./`basename $executable`
 fi
 
 inputfiles=({descr[transfer_input_files]})
 
 echo 'Transfer input files to node:'
+status=0
 for inputfile in ${{inputfiles[*]}}
 do
     cp -v $inputfile .
+    status+=$?
 done
+
+if [ $status -ne 0 ]
+then
+    cleanup
+    exit $status
+fi
 
 echo 'Execute...'
 $executable {descr[arguments]}
+
 status=$?
+if [ $status -ne 0 ]
+then
+    cleanup
+    exit $status
+fi
 
 outputfiles=({descr[transfer_output_files]})
 
 echo 'Transfer output files:'
+status=0
 for outputfile in ${{outputfiles[*]}}
 do
     mv -v `basename $outputfile` $outputfile
-    status=$status || $?
+    status+=$?
 done
 
-echo 'Remove working directory:'
-cd ..
-rm -rv $workdir
+if [ $status -ne 0 ]
+then
+    cleanup
+    exit $status
+fi
 
-exit $status"""
+cleanup"""
