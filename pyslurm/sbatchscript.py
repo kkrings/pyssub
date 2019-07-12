@@ -236,9 +236,6 @@ _skeleton = """#!/usr/bin/env bash
 
 {descr[options]}
 
-# Exit when any command fails.
-set -e
-
 echo "Working on node `hostname`."
 
 echo 'Create working directory:'
@@ -266,6 +263,7 @@ done
 
 echo 'Execute...'
 $executable {descr[arguments]}
+status=$?
 
 outputfiles=({descr[transfer_output_files]})
 
@@ -273,8 +271,11 @@ echo 'Transfer output files:'
 for outputfile in ${{outputfiles[*]}}
 do
     mv -v `basename $outputfile` $outputfile
+    status=$status || $?
 done
 
 echo 'Remove working directory:'
 cd ..
-rm -rv $workdir"""
+rm -rv $workdir
+
+exit $status"""
