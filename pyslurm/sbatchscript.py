@@ -236,6 +236,9 @@ _skeleton = """#!/usr/bin/env bash
 
 {descr[options]}
 
+# Exit when any command fails.
+set -e
+
 echo "Working on node `hostname`."
 
 echo 'Create working directory:'
@@ -262,7 +265,7 @@ do
 done
 
 echo 'Execute...'
-srun $executable {descr[arguments]}
+$executable {descr[arguments]}
 
 outputfiles=({descr[transfer_output_files]})
 
