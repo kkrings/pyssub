@@ -232,7 +232,7 @@ def save(script, filename):
 
 
 # ---Loading of Slurm batch script collection----------------------------------
-def collection(filename):
+def collection(filename, rescue=None):
     """Load Slurm batch scripts from disk.
 
     Load collection of Slurm batch scripts from disk based on Python's
@@ -254,6 +254,9 @@ def collection(filename):
     ----------
     filename : str
         Path to saved collection of Slurm batch scripts
+    rescue : list(str), optional
+        Sequence of names of jobs that should be taken into account; all
+        others are ignored.
 
     Returns
     -------
@@ -273,6 +276,9 @@ def collection(filename):
 
     scripts = {}
     for name in description.sections():
+        if rescue is not None and name not in rescue:
+            continue
+
         macros = dict(description[name])
         script = load(macros.pop("script"))
         scripts[name] = SBatchScriptMacro(script, macros)

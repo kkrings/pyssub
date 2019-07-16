@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Successively submit batch scripts into the Slurm queue, checking that
-not more jobs than `nmax` are queuing.
+"""This script allows you to submit Slurm batch scripts using `submit`.
+After your jobs are completed, you can check for failed jobs and save
+these to a rescue file using `rescue`.
 
 """
 import os
@@ -13,17 +14,45 @@ import pyslurm.scmd
 import pyslurm.shist
 
 
-def main(inputfile, nmax=1000, wait=120, partition=None):
-    # Load Slurm batch scripts from disk and submit them.
-    scripts = pyslurm.sbatch.collection(inputfile)
-    jobs = submit(scripts, partition, nmax, wait)
+# ---Script's subcommands------------------------------------------------------
+def submit(inputfile, outputfile,
+           rescue=None,
+           nmax=1000,
+           wait=120,
+           partition=None):
+    """Submit Slurm batch scripts.
 
-    # Save names and IDs of submitted jobs.
-    outputfile = os.path.basename(inputfile) + ".out"
-    pyslurm.shist.save(outputfile, jobs)
+    Successively submit the batch scripts listed in the given input file
+    into the Slurm queue, requesting the given partition and checking
+    that not more jobs than `nmax` are queuing. Wait for `wait` seconds
+    before trying to submit more jobs. Save name and ID of the
+    submitted jobs in the given output file. If a rescue file is given,
+    which contains failed jobs from a previous submission, only these
+    jobs are resubmitted.
+
+    """
+    if rescue is not None:
+        rescue = list(pyslurm.shist.load(rescue).keys())
+
+    scripts = pyslurm.sbatch.collection(inputfile, rescue)
+    pyslurm.shist.save(outputfile, jobs=sbatch(scripts, partition, nmax, wait))
 
 
-def submit(scripts, partition=None, nmax=1000, wait=120):
+def rescue(inputfile, outputfile):
+    """Save a rescue file to disk.
+
+    Load the submitted jobs listed in the given input file from disk.
+    These should have completed, otherwise they will be ignored. Check
+    which of these jobs have failed and save those to disk, using the
+    path to the given output file.
+
+    """
+    jobs = pyslurm.shist.load(inputfile)
+    pyslurm.shist.save(outputfile, jobs=pyslurm.scmd.failed(jobs))
+
+
+# ---Slurm batch script submission---------------------------------------------
+def sbatch(scripts, partition=None, nmax=1000, wait=120):
     """Successively submit Slurm batch scripts.
 
     This function allows the successive submission of a collection of
@@ -70,16 +99,40 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
 
-    parser.add_argument(
+    parent = argparse.ArgumentParser(add_help=False)
+
+    parent.add_argument(
         "--in",
         nargs="?",
         type=str,
-        help="path to submit description",
+        help="path to input file",
         required=True,
         metavar="PATH",
         dest="inputfile")
 
-    parser.add_argument(
+    parent.add_argument(
+        "--out",
+        nargs="?",
+        type=str,
+        help="path to output file",
+        required=True,
+        metavar="PATH",
+        dest="outputfile")
+
+    subparsers = parser.add_subparsers()
+
+    subparser = subparsers.add_parser(
+        "submit", description=submit.__doc__, parents=[parent])
+
+    subparser.add_argument(
+        "--rescue",
+        nargs="?",
+        type=str,
+        help="path to rescue file",
+        metavar="PATH",
+        dest="rescue")
+
+    subparser.add_argument(
         "--nmax",
         nargs="?",
         type=int,
@@ -87,7 +140,7 @@ if __name__ == "__main__":
         default=1000,
         metavar="NUM")
 
-    parser.add_argument(
+    subparser.add_argument(
         "--wait",
         nargs="?",
         type=int,
@@ -95,14 +148,22 @@ if __name__ == "__main__":
         default=120,
         metavar="SEC")
 
-    parser.add_argument(
+    subparser.add_argument(
         "--partition",
         nargs="?",
         type=str,
-        help="request this particular partition",
+        help="request this partition",
         default=None,
         metavar="NAME")
 
-    args = parser.parse_args()
+    subparser.set_defaults(function=submit)
 
-    main(args.inputfile, args.nmax, args.wait, args.partition)
+    subparser = subparsers.add_parser(
+        "rescue", description=rescue.__doc__, parents=[parent])
+
+    subparser.set_defaults(function=rescue)
+
+    kwargs = vars(parser.parse_args())
+
+    function = kwargs.pop("function")
+    function(**kwargs)
