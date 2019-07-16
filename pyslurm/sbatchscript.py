@@ -238,8 +238,14 @@ _skeleton = """#!/usr/bin/env bash
 
 echo "Working on node `hostname`."
 
+if [ -z $SLURM_JOB_NAME ]
+then
+    workdir="slurm"
+else
+    workdir="slurm_$SLURM_JOB_NAME"
+fi
+
 echo 'Create working directory:'
-workdir="slurm_job_$SLURM_JOB_NAME"
 mkdir -v $workdir
 
 status=$?
