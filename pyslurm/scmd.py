@@ -133,7 +133,7 @@ def failed(jobs):
         ]
 
     failed = {
-        jobname: jobid for jobid, jobname in jobs.items()
+        jobname: jobid for jobname, jobid in jobs.items()
         if jobid in failed
         }
 
