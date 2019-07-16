@@ -98,7 +98,7 @@ def failed(jobs):
     """Failed jobs
 
     Check which of the given jobs have failed, meaning that their states
-    are neither ``COMPLETED, RUNNING, or PENNDING``.
+    are not equal to ``COMPLETED``.
 
     Parameters
     ----------
@@ -111,9 +111,9 @@ def failed(jobs):
         Mapping of names to IDs of the jobs that have failed
 
     """
-    jobids = ",".join(str(jobid) for jobid in jobs.values())
+    jobids = ",".join("{}.batch".format(jobid) for jobid in jobs.values())
 
-    command = ["sacct", "-j", jobids, "-n", "-o", "state"]
+    command = ["sacct", "-j", jobids, "-n", "-o", "jobid,state"]
 
     process = subprocess.run(
         command,
@@ -122,12 +122,19 @@ def failed(jobs):
         check=True,
         encoding="utf-8")
 
-    states = [state.strip() for state in process.stdout.splitlines()]
+    completed = [line.split() for line in process.stdout.splitlines()]
 
-    result = {
-        name: jobid
-        for (name, jobid), state in zip(jobs.items(), states)
-        if state not in ["COMPLETED", "RUNNING", "PENDING"]
+    pattern = re.compile(r"(?P<jobid>\d+).batch")
+
+    failed = [
+        int(pattern.match(jobid).group("jobid"))
+        for jobid, state in completed
+        if state != "COMPLETED"
+        ]
+
+    failed = {
+        jobname: jobid for jobid, jobname in jobs.items()
+        if jobid in failed
         }
 
-    return result
+    return failed
