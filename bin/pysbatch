@@ -10,7 +10,7 @@ import time
 
 import pyslurm.sbatch
 import pyslurm.scmd
-import pyslurm.sout
+import pyslurm.shist
 
 
 def main(inputfile, nmax=1000, wait=120, partition=None):
@@ -20,7 +20,7 @@ def main(inputfile, nmax=1000, wait=120, partition=None):
 
     # Save names and IDs of submitted jobs.
     outputfile = os.path.basename(inputfile) + ".out"
-    pyslurm.sout.save(outputfile, jobs)
+    pyslurm.shist.save(outputfile, jobs)
 
 
 def submit(scripts, partition=None, nmax=1000, wait=120):
