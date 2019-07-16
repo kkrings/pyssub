@@ -138,7 +138,7 @@ class SBatch:
             Number of queuing jobs
 
         """
-        command = ["squeue", "-h", "-u", user]
+        command = ["squeue", "-h", "-o", "'%.i'", "-u", user]
 
         if partition is not None:
             command.extend(["-p", partition])
