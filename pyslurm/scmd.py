@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
 
-"""Module containing a function for submitting Slurm batch scripts
+"""Module containing functions wrapping Slurm commands.
 
 """
-import configparser
 import os
 import re
 import subprocess
 import tempfile
 
-from . import sbatchscript
 
-
-# ---Submitting Slurm batch scripts--------------------------------------------
 def submit(script, partition=None):
     """Submit Slurm batch script.
 
@@ -64,7 +60,7 @@ def submit(script, partition=None):
     return int(match.group("jobid"))
 
 
-def njobs(user, partition=None):
+def numjobs(user, partition=None):
     """Number of queuing jobs
 
     Check the number of queuing jobs for the given `user`
@@ -135,81 +131,3 @@ def failed(jobs):
         }
 
     return result
-
-
-# ---Loading Slurm batch scripts-----------------------------------------------
-def load(filename):
-    """Load Slurm batch scripts from disk.
-
-    Load collection of Slurm batch scripts from disk based on Python's
-    simple configuration language:
-
-    .. code-block:: ini
-
-        [Name of 1st job]
-        script = path to saved Slurm batch script
-
-        # Macros are optional.
-        name of 1st macro = value of 1st macro
-        name of 2nd macro = value of 2nd macro
-
-        [Name of 2nd job]
-        script = path to saved Slurm batch script
-
-    Parameters
-    ----------
-    filename : str
-        Path to saved collection of Slurm batch scripts
-
-    Returns
-    -------
-    dict(str, SBatchScriptMacro)
-        Mapping of job names to Slurm batch scripts
-
-    Notes
-    -----
-    The extended interpolation feature of Python's simple configuration
-    language is enabled.
-
-    """
-    description = configparser.ConfigParser(
-        interpolation=configparser.ExtendedInterpolation())
-
-    description.read(filename)
-
-    scripts = {}
-    for name in description.sections():
-        macros = dict(description[name])
-        script = sbatchscript.load(macros.pop("script"))
-        scripts[name] = sbatchscript.SBatchScriptMacro(script, macros)
-
-    return scripts
-
-
-# ---Save job names and IDs.---------------------------------------------------
-def save(filename, jobs):
-    """Save names and IDs of submitted Slurm jobs to disk.
-
-    Parameters
-    ----------
-    filename : str
-        Path to output file
-    jobs : dict(str, int)
-        Mapping of job names to job IDs
-
-    """
-    width = {
-        "jobname": max(len(jobname) for jobname in jobs.keys()),
-        "jobid": max(len(str(jobid)) for jobid in jobs.values())
-        }
-
-    width["jobname"] = max(width["jobname"], len("# Job name"))
-    width["jobid"] = max(width["jobid"], len("job ID"))
-
-    line = "{{:{width[jobname]}}} {{:{width[jobid]}}}\n".format(width=width)
-
-    with open(filename, "w") as stream:
-        stream.write(line.format("# Job name", "job ID"))
-
-        for jobname, jobid in jobs.items():
-            stream.write(line.format(jobname, jobid))

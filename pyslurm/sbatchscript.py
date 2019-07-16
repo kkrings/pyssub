@@ -231,6 +231,55 @@ def save(script, filename):
         description.write(stream)
 
 
+# ---Loading of Slurm batch script collection----------------------------------
+def collection(filename):
+    """Load Slurm batch scripts from disk.
+
+    Load collection of Slurm batch scripts from disk based on Python's
+    simple configuration language:
+
+    .. code-block:: ini
+
+        [Name of 1st job]
+        script = path to saved Slurm batch script
+
+        # Macros are optional.
+        name of 1st macro = value of 1st macro
+        name of 2nd macro = value of 2nd macro
+
+        [Name of 2nd job]
+        script = path to saved Slurm batch script
+
+    Parameters
+    ----------
+    filename : str
+        Path to saved collection of Slurm batch scripts
+
+    Returns
+    -------
+    dict(str, SBatchScriptMacro)
+        Mapping of job names to Slurm batch scripts
+
+    Notes
+    -----
+    The extended interpolation feature of Python's simple configuration
+    language is enabled.
+
+    """
+    description = configparser.ConfigParser(
+        interpolation=configparser.ExtendedInterpolation())
+
+    description.read(filename)
+
+    scripts = {}
+    for name in description.sections():
+        macros = dict(description[name])
+        script = load(macros.pop("script"))
+        scripts[name] = SBatchScriptMacro(script, macros)
+
+    return scripts
+
+
 # ---Batch script skeleton-----------------------------------------------------
 _skeleton = """#!/usr/bin/env bash
 
