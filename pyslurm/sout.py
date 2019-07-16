@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Module containing functions for saving/loading the names and IDs of
-submitted Slurm jobs
+"""Slurm job history: save/load names and IDs of submitted jobs
 
 """
 
