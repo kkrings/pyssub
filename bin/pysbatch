@@ -9,6 +9,7 @@ import os
 import time
 
 import pyslurm.sbatch
+import pyslurm.scmd
 import pyslurm.sout
 
 
@@ -52,12 +53,12 @@ def submit(scripts, partition=None, nmax=1000, wait=120):
     jobs = {}
     while len(scripts) > 0:
         nnew = min(
-            nmax - pyslurm.sbatch.njobs(str(os.getuid()), partition),
+            nmax - pyslurm.scmd.numjobs(str(os.getuid()), partition),
             len(scripts))
 
         for _ in range(nnew):
             name, script = scripts.popitem()
-            jobs[name] = pyslurm.sbatch.submit(script, partition)
+            jobs[name] = pyslurm.scmd.submit(script, partition)
 
         if len(scripts) > 0:
             time.sleep(wait)
