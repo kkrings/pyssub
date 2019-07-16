@@ -9,16 +9,17 @@ import os
 import time
 
 import pyslurm.sbatch
+import pyslurm.sout
 
 
 def main(inputfile, nmax=1000, wait=120, partition=None):
     # Load Slurm batch scripts from disk and submit them.
-    scripts = pyslurm.sbatch.load(inputfile)
+    scripts = pyslurm.sbatch.collection(inputfile)
     jobs = submit(scripts, partition, nmax, wait)
 
     # Save names and IDs of submitted jobs.
     outputfile = os.path.basename(inputfile) + ".out"
-    pyslurm.sbatch.save(outputfile, jobs)
+    pyslurm.sout.save(outputfile, jobs)
 
 
 def submit(scripts, partition=None, nmax=1000, wait=120):
