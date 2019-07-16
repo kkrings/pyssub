@@ -200,3 +200,32 @@ def load(filename):
         scripts[name] = sbatchscript.SBatchScriptMacro(script, macros)
 
     return scripts
+
+
+# --Save job names and IDs.----------------------------------------------------
+def save(filename, jobs):
+    """Save names and IDs of submitted Slurm jobs to disk.
+
+    Parameters
+    ----------
+    filename : str
+        Path to output file
+    jobs : dict(str, int)
+        Mapping of job names to job IDs
+
+    """
+    width = {
+        "jobname": max(len(jobname) for jobname in jobs.keys()),
+        "jobid": max(len(str(jobid)) for jobid in jobs.values())
+        }
+
+    width["jobname"] = max(width["jobname"], len("# Job name"))
+    width["jobid"] = max(width["jobid"], len("job ID"))
+
+    line = "{{:{width[jobname]}}} {{:{width[jobid]}}}\n".format(width=width)
+
+    with open(filename, "w") as stream:
+        stream.write(line.format("# Job name", "job ID"))
+
+        for jobname, jobid in jobs.items():
+            stream.write(line.format(jobname, jobid))

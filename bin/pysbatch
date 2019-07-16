@@ -5,6 +5,8 @@
 not more jobs than `nmax` are queuing.
 
 """
+import os
+
 import pyslurm.sbatch
 
 
@@ -13,7 +15,11 @@ def main(inputfile, nmax=1000, wait=120, partition=None):
 
     # Load Slurm batch scripts from disk and submit them.
     scripts = pyslurm.sbatch.load(inputfile)
-    submitter(scripts, partition)
+    jobs = submitter(scripts, partition)
+
+    # Save names and IDs of submitted jobs.
+    outputfile = os.path.basename(inputfile) + ".out"
+    pyslurm.sbatch.save(outputfile, jobs)
 
 
 if __name__ == "__main__":
