@@ -52,13 +52,16 @@ def save(filename, jobs):
     """
     colwidth = {"jobname": len("# job name"), "jobid": len("job ID")}
 
-    colwidth = {
-        "jobname": max(len(jobname) for jobname in jobs.keys()),
-        "jobid": max(len(str(jobid)) for jobid in jobs.values())
-        }
+    if len(jobs) > 0:
+        colwidth["jobname"] = max(
+            colwidth["jobname"],
+            max(len(jobname) for jobname in jobs.keys())
+            )
 
-    colwidth["jobname"] = max(colwidth["jobname"], len("# job name"))
-    colwidth["jobid"] = max(colwidth["jobid"], len("job ID"))
+        colwidth["jobid"] = max(
+            colwidth["jobid"],
+            max(len(jobid) for jobid in jobs.values())
+            )
 
     row = "{{:{width[jobname]}}} {{:{width[jobid]}}}\n".format(width=colwidth)
 
