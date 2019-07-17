@@ -60,7 +60,7 @@ def save(filename, jobs):
 
         colwidth["jobid"] = max(
             colwidth["jobid"],
-            max(len(jobid) for jobid in jobs.values())
+            max(len(str(jobid)) for jobid in jobs.values())
             )
 
     row = "{{:{width[jobname]}}} {{:{width[jobid]}}}\n".format(width=colwidth)
