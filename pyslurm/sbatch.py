@@ -290,6 +290,24 @@ def collection(filename, rescue=None):
     if len(success) == 0:
         raise IOError("Cannot read input file {}.".format(filename))
 
+    def convertable(value, cast):
+        """Check if macro value can be converted into type `cast`."""
+        try:
+            cast(value)
+            return True
+        except ValueError:
+            return False
+
+    def convert(value):
+        """Try to convert macro value into integer or float."""
+        if convertable(value, int):
+            return int(value)
+
+        if convertable(value, float):
+            return float(value)
+
+        return value
+
     scripts = {}
     for name in description.sections():
         if rescue is not None and name not in rescue:
@@ -297,6 +315,7 @@ def collection(filename, rescue=None):
 
         macros = dict(description[name])
         script = load(macros.pop("script"))
+        macros = {key: convert(value) for key, value in macros}
         scripts[name] = SBatchScriptMacro(script, macros)
 
     return scripts
