@@ -171,8 +171,9 @@ def load(filename):
 
     """
     description = configparser.ConfigParser(
-        interpolation=configparser.ExtendedInterpolation(),
-        allow_no_value=True)
+        allow_no_value=True,
+        delimiters=('='),
+        interpolation=configparser.ExtendedInterpolation())
 
     success = description.read(filename)
 
@@ -214,7 +215,8 @@ def save(script, filename):
         Path to output file
 
     """
-    description = configparser.ConfigParser(allow_no_value=True)
+    description = configparser.ConfigParser(
+        allow_no_value=True, delimiters=('='))
 
     description["executable"] = {
         "command": script.executable,
@@ -283,6 +285,8 @@ def collection(filename, rescue=None):
 
     """
     description = configparser.ConfigParser(
+        allow_no_value=True,
+        delimiters=('='),
         interpolation=configparser.ExtendedInterpolation())
 
     success = description.read(filename)
