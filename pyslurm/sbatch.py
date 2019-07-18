@@ -159,6 +159,11 @@ def load(filename):
     SBatchScript
         Slurm batch script
 
+    Raises
+    ------
+    IOError
+        If `filename` cannot be read.
+
     Notes
     -----
     The extended interpolation feature of Python's simple configuration
@@ -169,7 +174,10 @@ def load(filename):
         interpolation=configparser.ExtendedInterpolation(),
         allow_no_value=True)
 
-    description.read(filename)
+    success = description.read(filename)
+
+    if len(success) == 0:
+        raise IOError("Cannot read input file {}.".format(filename))
 
     script = SBatchScript(
         executable=description["executable"]["command"],
@@ -263,6 +271,11 @@ def collection(filename, rescue=None):
     dict(str, SBatchScriptMacro)
         Mapping of job names to Slurm batch scripts
 
+    Raises
+    ------
+    IOError
+        If `filename` cannot be read.
+
     Notes
     -----
     The extended interpolation feature of Python's simple configuration
@@ -272,7 +285,10 @@ def collection(filename, rescue=None):
     description = configparser.ConfigParser(
         interpolation=configparser.ExtendedInterpolation())
 
-    description.read(filename)
+    success = description.read(filename)
+
+    if len(success) == 0:
+        raise IOError("Cannot read input file {}.".format(filename))
 
     scripts = {}
     for name in description.sections():
