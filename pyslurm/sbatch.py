@@ -315,7 +315,7 @@ def collection(filename, rescue=None):
 
         macros = dict(description[name])
         script = load(macros.pop("script"))
-        macros = {key: convert(value) for key, value in macros}
+        macros = {key: convert(value) for key, value in macros.items()}
         scripts[name] = SBatchScriptMacro(script, macros)
 
     return scripts
