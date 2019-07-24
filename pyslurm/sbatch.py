@@ -332,11 +332,11 @@ _skeleton = """#!/usr/bin/env bash
 
 echo "Working on node `hostname`."
 
-if [ -z $SLURM_JOB_NAME ]
+if [ -z $SLURM_JOB_ID ]
 then
     workdir="slurm"
 else
-    workdir="slurm_$SLURM_JOB_NAME"
+    workdir="slurm_$SLURM_JOB_ID"
 fi
 
 echo 'Create working directory:'
