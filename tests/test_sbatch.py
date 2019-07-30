@@ -34,7 +34,7 @@ class TestSBatchScriptMacro(unittest.TestCase):
 
         # Create batch script.
         executable = pkg_resources.resource_filename(
-            __name__, "test_executable.py")
+            __name__, os.path.join("data", "executable.py"))
 
         script = pyslurm.sbatch.SBatchScript(
             executable, arguments="--in test_input.txt --out test_output.txt")
