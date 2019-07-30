@@ -13,4 +13,5 @@ setuptools.setup(
     url="https://github.com/kkrings/pyslurm/",
     license="GPLv3",
     packages=setuptools.find_packages(),
-    scripts=["bin/pysbatch"])
+    scripts=["bin/pysbatch"],
+    test_suite="tests")

@@ -5,6 +5,7 @@
 
 """
 import os
+import pkg_resources
 import subprocess
 import tempfile
 import unittest
@@ -32,9 +33,11 @@ class TestSBatchScriptMacro(unittest.TestCase):
             stream.write("This is a test input file for PySlurm.\n")
 
         # Create batch script.
+        executable = pkg_resources.resource_filename(
+            __name__, "test_executable.py")
+
         script = pyslurm.sbatch.SBatchScript(
-            executable=os.path.abspath("test_executable.py"),
-            arguments="--in test_input.txt --out test_output.txt")
+            executable, arguments="--in test_input.txt --out test_output.txt")
 
         script.transfer_executable = True
         script.transfer_input_files.append("{macros[inputfile]}")
