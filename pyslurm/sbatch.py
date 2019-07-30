@@ -331,6 +331,7 @@ _skeleton = """#!/usr/bin/env bash
 {descr[options]}
 
 echo "Working on node `hostname`."
+echo "Current directory: `pwd`"
 
 if [ -z $SLURM_JOB_ID ]
 then
