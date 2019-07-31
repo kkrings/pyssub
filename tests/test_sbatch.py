@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 import unittest
 
-import pyslurm.sbatch
+import pysdag.sbatch
 
 
 # ---Helper class for executing batch script-----------------------------------
@@ -61,7 +61,7 @@ class Executable:
         self.inputfile = os.path.join(workdir, "test_input.txt")
         if write_input:
             with open(self.inputfile, "w") as stream:
-                stream.write("This is a test input file for PySlurm.\n")
+                stream.write("This is a test input file for PySDAG.\n")
 
         self.outputfile = os.path.join(workdir, "test_output.txt")
 
@@ -97,8 +97,8 @@ class Executable:
             "outputfile": self.outputfile
             }
 
-        script = pyslurm.sbatch.SBatchScriptMacro(
-            script=pyslurm.sbatch.SBatchScript(self.executable, arguments),
+        script = pysdag.sbatch.SBatchScriptMacro(
+            script=pysdag.sbatch.SBatchScript(self.executable, arguments),
             macros=macros)
 
         script.script.transfer_executable = True
@@ -164,7 +164,7 @@ class TestSBatchScriptSuccess(unittest.TestCase, TestSBatchScript):
     """
     @classmethod
     def setUpClass(cls):
-        cls.workdir = tempfile.TemporaryDirectory(prefix="pyslurm_")
+        cls.workdir = tempfile.TemporaryDirectory(prefix="pysdag_")
         execute = Executable(cls.workdir.name)
         cls.outputfile = execute.outputfile
         cls.process = execute()
@@ -188,7 +188,7 @@ class TestSBatchScriptFailureNoInputFile(unittest.TestCase, TestSBatchScript):
     """
     @classmethod
     def setUpClass(cls):
-        cls.workdir = tempfile.TemporaryDirectory(prefix="pyslurm_")
+        cls.workdir = tempfile.TemporaryDirectory(prefix="pysdag_")
         # Specify an input file that does not exist.
         cls.process = Executable(cls.workdir.name, write_input=False)()
         cls.returncode = 1
@@ -203,7 +203,7 @@ class TestSBatchScriptFailureNoExecutable(unittest.TestCase, TestSBatchScript):
     """
     @classmethod
     def setUpClass(cls):
-        cls.workdir = tempfile.TemporaryDirectory(prefix="pyslurm_")
+        cls.workdir = tempfile.TemporaryDirectory(prefix="pysdag_")
         cls.process = Executable(cls.workdir.name, copy_executable=False)()
         cls.returncode = 1
 
@@ -216,7 +216,7 @@ class TestSBatchScriptFailureExecutable(unittest.TestCase, TestSBatchScript):
     """
     @classmethod
     def setUpClass(cls):
-        cls.workdir = tempfile.TemporaryDirectory(prefix="pyslurm_")
+        cls.workdir = tempfile.TemporaryDirectory(prefix="pysdag_")
         cls.process = Executable(cls.workdir.name)(fail=True)
         cls.returncode = 1
 
@@ -230,7 +230,7 @@ class TestSBatchScriptFailureNoOutputFile(unittest.TestCase, TestSBatchScript):
     """
     @classmethod
     def setUpClass(cls):
-        cls.workdir = tempfile.TemporaryDirectory(prefix="pyslurm_")
+        cls.workdir = tempfile.TemporaryDirectory(prefix="pysdag_")
         cls.process = Executable(cls.workdir.name)(write_output=False)
         cls.returncode = 1
 

@@ -28,7 +28,7 @@ def submit(script, partition=None):
     # Save script to disk.
     options = {
         "mode": "w",
-        "prefix": "pyslurm_",
+        "prefix": "pysdag_",
         "suffix": ".sh",
         "delete": False
         }
