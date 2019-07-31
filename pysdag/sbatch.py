@@ -3,7 +3,7 @@
 """Module containing classes representing a Slurm batch script
 
 """
-import configparser
+import json
 
 
 # ---Slurm batch script--------------------------------------------------------
@@ -119,35 +119,69 @@ class SBatchScriptMacro:
         return _skeleton.format(descr=description)
 
 
-# --Loading and saving Slurm batch script--------------------------------------
+# ---Loading and saving Slurm batch script-------------------------------------
+class SBatchScriptEncoder(json.JSONEncoder):
+    """JSON encoder for Slurm batch script
+
+    This class provides a JSON-compatible representation of a Slurm
+    batch script.
+
+    """
+    def default(self, obj):
+        """Try to encode the given object."""
+        if isinstance(obj, SBatchScript):
+            return self._encode(script=obj)
+        else:
+            super().default(obj)
+
+    def _encode(self, script):
+        """Encode the given Slurm batch script."""
+        description = {"executable": script.executable}
+
+        if len(script.arguments) > 0:
+            description["arguments"] = script.arguments
+
+        description["transfer_executable"] = script.transfer_executable
+
+        if len(script.options) > 0:
+            description["options"] = {
+                k: str(v) for k, v in script.options.items()
+                }
+
+        if len(script.transfer_input_files) > 0:
+            description["transfer_input_files"] = script.transfer_input_files
+
+        if len(script.transfer_output_files) > 0:
+            description["transfer_output_files"] = script.transfer_output_files
+
+        return description
+
+
 def load(filename):
     """Load Slurm batch script from disk.
 
-    Load Slurm batch script from disk based on Python's simple
-    configuration language:
+    Load Slurm batch script from disk based on the JSON format:
 
-    .. code-block:: ini
+    .. code-block:: json
 
-        [executable]
-        command = command name or path to executable
-        arguments = arguments the executable takes
-        transfer_executable = False
+        {
+            "executable": "command name or path to executable"
+            "arguments": "arguments the executable takes"
+            "transfer_executable": False
+            "options": {
+                "ntasks": 1
+            }
+            "transfer_input_files": [
+                "path to 1st input file",
+                "path to 2nd input file"
+            ]
+            "transfer_output_files": [
+                "path to 1st output file",
+                "path to 2nd output file"
+            ]
+        }
 
-        [options]
-        ntasks = 1
-
-        # Optional file transfer: list input files
-        [transfer_input_files]
-        path to 1st input file
-        path to 2nd input file
-
-        # Optional file transfer: list output files
-        [transfer_output_files]
-        path to 1st output file
-        path to 2nd output file
-
-    The ``command`` option in the ``executable`` section is the only
-    mandatory one.
+    The ``executable`` key is the only mandatory one.
 
     Parameters
     ----------
@@ -159,33 +193,15 @@ def load(filename):
     SBatchScript
         Slurm batch script
 
-    Raises
-    ------
-    IOError
-        If `filename` cannot be read.
-
-    Notes
-    -----
-    The extended interpolation feature of Python's simple configuration
-    language is enabled.
-
     """
-    description = configparser.ConfigParser(
-        allow_no_value=True,
-        delimiters=('='),
-        interpolation=configparser.ExtendedInterpolation())
-
-    success = description.read(filename)
-
-    if len(success) == 0:
-        raise IOError("Cannot read input file {}.".format(filename))
+    with open(filename, "r") as stream:
+        description = json.load(stream)
 
     script = SBatchScript(
-        executable=description["executable"]["command"],
-        arguments=description["executable"].get("arguments", ""))
+        executable=description["executable"],
+        arguments=description.get("arguments", ""))
 
-    script.transfer_executable = description["executable"].getboolean(
-        "transfer_executable", False)
+    script.transfer_executable = description.get("transfer_executable", False)
 
     if "options" in description:
         script.options.update(description["options"])
@@ -204,8 +220,7 @@ def load(filename):
 def save(script, filename):
     """Save Slurm batch script to disk.
 
-    Save Slurm batch script to disk based on Python's simple
-    configuration language.
+    Save Slurm batch script to disk based on the JSON format.
 
     Parameters
     ----------
@@ -215,50 +230,33 @@ def save(script, filename):
         Path to output file
 
     """
-    description = configparser.ConfigParser(
-        allow_no_value=True, delimiters=('='))
-
-    description["executable"] = {
-        "command": script.executable,
-        "arguments": script.arguments,
-        "transfer_executable": script.transfer_executable
-        }
-
-    if len(script.options) > 0:
-        description["options"] = script.options
-
-    if len(script.transfer_input_files) > 0:
-        description["transfer_input_files"] = {
-            f: None for f in script.transfer_input_files
-            }
-
-    if len(script.transfer_output_files) > 0:
-        description["transfer_output_files"] = {
-            f: None for f in script.transfer_output_files
-            }
-
     with open(filename, "w") as stream:
-        description.write(stream)
+        json.dump(script, stream, cls=SBatchScriptEncoder, indent=4)
 
 
 # ---Loading of Slurm batch script collection----------------------------------
 def collection(filename, rescue=None):
     """Load Slurm batch scripts from disk.
 
-    Load collection of Slurm batch scripts from disk based on Python's
-    simple configuration language:
+    Load collection of Slurm batch scripts from disk based on the JSON
+    format:
 
-    .. code-block:: ini
+    .. code-block:: json
 
-        [Name of 1st job]
-        script = path to saved Slurm batch script
-
-        # Macros are optional.
-        name of 1st macro = value of 1st macro
-        name of 2nd macro = value of 2nd macro
-
-        [Name of 2nd job]
-        script = path to saved Slurm batch script
+        [
+            {
+                "jobname": "name of 1st job",
+                "script": "path to saved Slurm batch script"
+                "macros": {
+                    "name of 1st macro": "value of 1st macro",
+                    "name of 2nd macro": "value of 2nd macro"
+                }
+            }
+            {
+                "jobname": "name of 2nd job"
+                "script": "path to saved Slurm batch script"
+            }
+        ]
 
     Parameters
     ----------
@@ -273,54 +271,19 @@ def collection(filename, rescue=None):
     dict(str, SBatchScriptMacro)
         Mapping of job names to Slurm batch scripts
 
-    Raises
-    ------
-    IOError
-        If `filename` cannot be read.
-
-    Notes
-    -----
-    The extended interpolation feature of Python's simple configuration
-    language is enabled.
-
     """
-    description = configparser.ConfigParser(
-        allow_no_value=True,
-        delimiters=('='),
-        interpolation=configparser.ExtendedInterpolation())
-
-    success = description.read(filename)
-
-    if len(success) == 0:
-        raise IOError("Cannot read input file {}.".format(filename))
-
-    def convertable(value, cast):
-        """Check if macro value can be converted into type `cast`."""
-        try:
-            cast(value)
-            return True
-        except ValueError:
-            return False
-
-    def convert(value):
-        """Try to convert macro value into integer or float."""
-        if convertable(value, int):
-            return int(value)
-
-        if convertable(value, float):
-            return float(value)
-
-        return value
+    with open(filename, "r") as stream:
+        descriptionlist = json.load(stream)
 
     scripts = {}
-    for name in description.sections():
+    for description in descriptionlist:
+        name = description["jobname"]
+
         if rescue is not None and name not in rescue:
             continue
 
-        macros = dict(description[name])
-        script = load(macros.pop("script"))
-        macros = {key: convert(value) for key, value in macros.items()}
-        scripts[name] = SBatchScriptMacro(script, macros)
+        scripts[name] = SBatchScriptMacro(
+            description["script"], description["macros"])
 
     return scripts
 
