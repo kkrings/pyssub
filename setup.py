@@ -14,4 +14,4 @@ setuptools.setup(
     license="GPLv3",
     packages=setuptools.find_packages(),
     scripts=["bin/ssub"],
-    test_suite="tests")
+    test_suite="test")
