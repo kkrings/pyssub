@@ -4,6 +4,7 @@
 """Unit tests for `sbatch` module.
 
 """
+import json
 import os
 import pkg_resources
 import shutil
@@ -233,6 +234,76 @@ class TestSBatchScriptFailureNoOutputFile(unittest.TestCase, TestSBatchScript):
         cls.workdir = tempfile.TemporaryDirectory(prefix="pysdag_")
         cls.process = Executable(cls.workdir.name)(write_output=False)
         cls.returncode = 1
+
+
+# ---Test cases for saving and loading batch scripts---------------------------
+class TestSBatchIO(unittest.TestCase):
+    """Test case for saving and loading batch scripts
+
+    Initialize a batch script, save it to disk, both directly and via a
+    batch script collection, load it again, and check both scripts for
+    equality.
+
+    """
+    @classmethod
+    def setUpClass(cls):
+        cls.script = pysdag.sbatch.SBatchScript(
+            executable="/path/to/test_executable.py",
+            arguments="--in test_input_0000.txt")
+
+        cls.script.transfer_executable = True
+
+        cls.script.transfer_input_files.append(
+            "/path/to/test_input_0000.txt")
+
+        cls.script.transfer_output_files.append(
+            "/path/to/test_output_0000.txt")
+
+    def test_save_and_load(self):
+        """Save script directly and test for equality.
+
+        """
+        with tempfile.TemporaryDirectory(prefix="pysdag_") as dirname:
+            filename = os.path.join(dirname, "script.json")
+            pysdag.sbatch.save(self.script, filename)
+            other = pysdag.sbatch.load(filename)
+
+        self.assertEqual(self.script, other)
+
+    def test_collection(self):
+        """Save script via collection and test for equality.
+
+        """
+        script = pysdag.sbatch.SBatchScript(
+            executable="/path/to/test_executable.py",
+            arguments="--in test_input_{macros[jobid]:04d}.txt")
+
+        script.transfer_executable = True
+
+        script.transfer_input_files.append(
+            "/path/to/test_input_{macros[jobid]:04d}.txt")
+
+        script.transfer_output_files.append(
+            "/path/to/test_output_{macros[jobid]:04d}.txt")
+
+        name = "test_job"
+        with tempfile.TemporaryDirectory(prefix="pysdag_") as dirname:
+            scriptfile = os.path.join(dirname, "script.json")
+            pysdag.sbatch.save(script, scriptfile)
+
+            collection = [{
+                "name": name,
+                "script": scriptfile,
+                "macros": {"jobid": 0}
+                }]
+
+            filename = os.path.join(dirname, "collection.json")
+            with open(filename, "w") as stream:
+                json.dump(collection, stream)
+
+            collection = pysdag.sbatch.collection(filename)
+
+        self.assertEqual(collection, {name: self.script})
 
 
 if __name__ == "__main__":
