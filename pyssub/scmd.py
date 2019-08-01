@@ -28,7 +28,7 @@ def submit(script, partition=None):
     # Save script to disk.
     options = {
         "mode": "w",
-        "prefix": "pysdag_",
+        "prefix": "pyssub_",
         "suffix": ".sh",
         "delete": False
         }

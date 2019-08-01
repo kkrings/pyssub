@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 import unittest
 
-import pysdag.sbatch
+import pyssub.sbatch
 
 
 # ---Helper class for executing batch script-----------------------------------
@@ -62,7 +62,7 @@ class Executable:
         self.inputfile = os.path.join(workdir, "test_input.txt")
         if write_input:
             with open(self.inputfile, "w") as stream:
-                stream.write("This is a test input file for PySDAG.\n")
+                stream.write("This is a test input file for pyssub.\n")
 
         self.outputfile = os.path.join(workdir, "test_output.txt")
 
@@ -98,8 +98,8 @@ class Executable:
             "outputfile": self.outputfile
             }
 
-        script = pysdag.sbatch.SBatchScriptMacro(
-            script=pysdag.sbatch.SBatchScript(self.executable, arguments),
+        script = pyssub.sbatch.SBatchScriptMacro(
+            script=pyssub.sbatch.SBatchScript(self.executable, arguments),
             macros=macros)
 
         script.script.transfer_executable = True
@@ -165,7 +165,7 @@ class TestSBatchScriptSuccess(unittest.TestCase, TestSBatchScript):
     """
     @classmethod
     def setUpClass(cls):
-        cls.workdir = tempfile.TemporaryDirectory(prefix="pysdag_")
+        cls.workdir = tempfile.TemporaryDirectory(prefix="pyssub_")
         execute = Executable(cls.workdir.name)
         cls.outputfile = execute.outputfile
         cls.process = execute()
@@ -189,7 +189,7 @@ class TestSBatchScriptFailureNoInputFile(unittest.TestCase, TestSBatchScript):
     """
     @classmethod
     def setUpClass(cls):
-        cls.workdir = tempfile.TemporaryDirectory(prefix="pysdag_")
+        cls.workdir = tempfile.TemporaryDirectory(prefix="pyssub_")
         # Specify an input file that does not exist.
         cls.process = Executable(cls.workdir.name, write_input=False)()
         cls.returncode = 1
@@ -204,7 +204,7 @@ class TestSBatchScriptFailureNoExecutable(unittest.TestCase, TestSBatchScript):
     """
     @classmethod
     def setUpClass(cls):
-        cls.workdir = tempfile.TemporaryDirectory(prefix="pysdag_")
+        cls.workdir = tempfile.TemporaryDirectory(prefix="pyssub_")
         cls.process = Executable(cls.workdir.name, copy_executable=False)()
         cls.returncode = 1
 
@@ -217,7 +217,7 @@ class TestSBatchScriptFailureExecutable(unittest.TestCase, TestSBatchScript):
     """
     @classmethod
     def setUpClass(cls):
-        cls.workdir = tempfile.TemporaryDirectory(prefix="pysdag_")
+        cls.workdir = tempfile.TemporaryDirectory(prefix="pyssub_")
         cls.process = Executable(cls.workdir.name)(fail=True)
         cls.returncode = 1
 
@@ -231,7 +231,7 @@ class TestSBatchScriptFailureNoOutputFile(unittest.TestCase, TestSBatchScript):
     """
     @classmethod
     def setUpClass(cls):
-        cls.workdir = tempfile.TemporaryDirectory(prefix="pysdag_")
+        cls.workdir = tempfile.TemporaryDirectory(prefix="pyssub_")
         cls.process = Executable(cls.workdir.name)(write_output=False)
         cls.returncode = 1
 
@@ -247,7 +247,7 @@ class TestSBatchIO(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        cls.script = pysdag.sbatch.SBatchScript(
+        cls.script = pyssub.sbatch.SBatchScript(
             executable="/path/to/test_executable.py",
             arguments="--in test_input_0000.txt")
 
@@ -263,10 +263,10 @@ class TestSBatchIO(unittest.TestCase):
         """Save script directly and test for equality.
 
         """
-        with tempfile.TemporaryDirectory(prefix="pysdag_") as dirname:
+        with tempfile.TemporaryDirectory(prefix="pyssub_") as dirname:
             filename = os.path.join(dirname, "script.json")
-            pysdag.sbatch.save(self.script, filename)
-            other = pysdag.sbatch.load(filename)
+            pyssub.sbatch.save(self.script, filename)
+            other = pyssub.sbatch.load(filename)
 
         self.assertEqual(self.script, other)
 
@@ -274,7 +274,7 @@ class TestSBatchIO(unittest.TestCase):
         """Save script via collection and test for equality.
 
         """
-        script = pysdag.sbatch.SBatchScript(
+        script = pyssub.sbatch.SBatchScript(
             executable="/path/to/test_executable.py",
             arguments="--in test_input_{macros[jobid]:04d}.txt")
 
@@ -287,9 +287,9 @@ class TestSBatchIO(unittest.TestCase):
             "/path/to/test_output_{macros[jobid]:04d}.txt")
 
         name = "test_job"
-        with tempfile.TemporaryDirectory(prefix="pysdag_") as dirname:
+        with tempfile.TemporaryDirectory(prefix="pyssub_") as dirname:
             scriptfile = os.path.join(dirname, "script.json")
-            pysdag.sbatch.save(script, scriptfile)
+            pyssub.sbatch.save(script, scriptfile)
 
             collection = [{
                 "name": name,
@@ -301,7 +301,7 @@ class TestSBatchIO(unittest.TestCase):
             with open(filename, "w") as stream:
                 json.dump(collection, stream)
 
-            collection = pysdag.sbatch.collection(filename)
+            collection = pyssub.sbatch.collection(filename)
 
         self.assertEqual(collection, {name: self.script})
 

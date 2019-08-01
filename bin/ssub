@@ -9,9 +9,9 @@ these to a rescue file via `rescue`.
 import os
 import time
 
-import pysdag.sbatch
-import pysdag.scmd
-import pysdag.shist
+import pyssub.sbatch
+import pyssub.scmd
+import pyssub.shist
 
 
 # ---Script's subcommands------------------------------------------------------
@@ -32,10 +32,10 @@ def submit(inputfile, outputfile,
 
     """
     if rescue is not None:
-        rescue = list(pysdag.shist.load(rescue).keys())
+        rescue = list(pyssub.shist.load(rescue).keys())
 
-    scripts = pysdag.sbatch.collection(inputfile, rescue)
-    pysdag.shist.save(outputfile, jobs=sbatch(scripts, partition, nmax, wait))
+    scripts = pyssub.sbatch.collection(inputfile, rescue)
+    pyssub.shist.save(outputfile, jobs=sbatch(scripts, partition, nmax, wait))
 
 
 def rescue(inputfile, outputfile):
@@ -47,8 +47,8 @@ def rescue(inputfile, outputfile):
     path to the given output file.
 
     """
-    jobs = pysdag.shist.load(inputfile)
-    pysdag.shist.save(outputfile, jobs=pysdag.scmd.failed(jobs))
+    jobs = pyssub.shist.load(inputfile)
+    pyssub.shist.save(outputfile, jobs=pyssub.scmd.failed(jobs))
 
 
 # ---Slurm batch script submission---------------------------------------------
@@ -82,12 +82,12 @@ def sbatch(scripts, partition=None, nmax=1000, wait=120):
     jobs = {}
     while len(scripts) > 0:
         nnew = min(
-            nmax - pysdag.scmd.numjobs(str(os.getuid()), partition),
+            nmax - pyssub.scmd.numjobs(str(os.getuid()), partition),
             len(scripts))
 
         for _ in range(nnew):
             name, script = scripts.popitem()
-            jobs[name] = pysdag.scmd.submit(script, partition)
+            jobs[name] = pyssub.scmd.submit(script, partition)
 
         if len(scripts) > 0:
             time.sleep(wait)

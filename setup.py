@@ -5,13 +5,13 @@ import setuptools
 
 
 setuptools.setup(
-    name="pysdag",
+    name="pyssub",
     version="0.1",
     author="Kai Krings",
     author_email="kai.krings@posteo.net",
     description="Simple Python interface to Slurm",
-    url="https://github.com/kkrings/pysdag/",
+    url="https://github.com/kkrings/pyssub/",
     license="GPLv3",
     packages=setuptools.find_packages(),
-    scripts=["bin/sdag"],
+    scripts=["bin/ssub"],
     test_suite="tests")

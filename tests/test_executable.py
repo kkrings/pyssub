@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Test executable for `PySDAG`.
+"""Test executable for `pyssub`.
 
 If no command-line arguments are provided, this script simulates the
 successful execution of a command. A failed execution is simulated by
 raising a runtime exception if the option fail is used. This script can
 also be used to test the simple file transfer mechanism provided
-by `PySDAG` by either reading the content of the given input file or by
+by `pyssub` by either reading the content of the given input file or by
 writing an output file.
 
 """
@@ -29,7 +29,7 @@ def main(inputfile=None, outputfile=None, fail=False):
         print("Write a test output file.")
 
         with open(outputfile, "w") as stream:
-            stream.write("This is a test output file for PySDAG.")
+            stream.write("This is a test output file for pyssub.")
 
 
 if __name__ == "__main__":
