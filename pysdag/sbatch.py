@@ -49,6 +49,10 @@ class SBatchScript:
         """Script's string representation"""
         return _skeleton.format(descr=self._description)
 
+    def __eq__(self, other):
+        """Compare to other script."""
+        return str(self) == str(other)
+
     @property
     def _description(self):
         """dict(str, str): Script's description; will be inserted
@@ -117,6 +121,10 @@ class SBatchScriptMacro:
             }
 
         return _skeleton.format(descr=description)
+
+    def __eq__(self, other):
+        """Compare to other script."""
+        return str(self) == str(other)
 
 
 # ---Loading and saving Slurm batch script-------------------------------------
@@ -245,7 +253,7 @@ def collection(filename, rescue=None):
 
         [
             {
-                "jobname": "name of 1st job",
+                "name": "name of 1st job",
                 "script": "path to saved Slurm batch script"
                 "macros": {
                     "name of 1st macro": "value of 1st macro",
@@ -253,7 +261,7 @@ def collection(filename, rescue=None):
                 }
             }
             {
-                "jobname": "name of 2nd job"
+                "name": "name of 2nd job"
                 "script": "path to saved Slurm batch script"
             }
         ]
@@ -277,13 +285,14 @@ def collection(filename, rescue=None):
 
     scripts = {}
     for description in descriptionlist:
-        name = description["jobname"]
+        name = description["name"]
 
         if rescue is not None and name not in rescue:
             continue
 
         scripts[name] = SBatchScriptMacro(
-            description["script"], description["macros"])
+            script=load(description["script"]),
+            macros=description["macros"])
 
     return scripts
 
