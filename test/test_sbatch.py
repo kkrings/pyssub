@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Unit tests for `sbatch` module.
+"""Unit tests for `sbatch` module
 
 """
 import json
@@ -236,31 +235,22 @@ class TestSBatchScriptFailureNoOutputFile(unittest.TestCase, TestSBatchScript):
         cls.returncode = 1
 
 
-# ---Test cases for saving and loading batch scripts---------------------------
-class TestSBatchIO(unittest.TestCase):
-    """Test case for saving and loading batch scripts
+# ---Test cases for JSON-encoding and decoding batch scripts-------------------
+class TestSBatchScriptJSON(unittest.TestCase):
+    """Test case for JSON-encoding and decoding batch scripts
 
-    Initialize a batch script, save it to disk, both directly and via a
-    batch script collection, load it again, and check both scripts for
-    equality.
+    Initialize a batch script, save it to disk, load it again, and check
+    for equality.
 
     """
-    @classmethod
-    def setUpClass(cls):
-        cls.script = pyssub.sbatch.SBatchScript(
-            executable="/path/to/test_executable.py",
-            arguments="--in test_input_0000.txt")
+    def setUp(self):
+        """Initialize batch script.
 
-        cls.script.transfer_executable = True
+        """
+        self.script = pyssub.sbatch.SBatchScript("test_executable.py")
 
-        cls.script.transfer_input_files.append(
-            "/path/to/test_input_0000.txt")
-
-        cls.script.transfer_output_files.append(
-            "/path/to/test_output_0000.txt")
-
-    def test_save_and_load(self):
-        """Save script directly and test for equality.
+    def run_test(self, script):
+        """Execute test case.
 
         """
         with tempfile.TemporaryDirectory(prefix="pyssub_") as dirname:
@@ -268,44 +258,140 @@ class TestSBatchIO(unittest.TestCase):
             pyssub.sbatch.save(self.script, filename)
             other = pyssub.sbatch.load(filename)
 
-        self.assertEqual(self.script, other)
+        message = "Batch script is not the same after saving and loading."
+        self.assertEqual(other, script, message)
 
-    def test_collection(self):
-        """Save script via collection and test for equality.
+    def test_default(self):
+        """Test with only the executable specified.
 
         """
-        script = pyssub.sbatch.SBatchScript(
-            executable="/path/to/test_executable.py",
-            arguments="--in test_input_{macros[jobid]:04d}.txt")
+        self.run_test(self.script)
 
-        script.transfer_executable = True
+    def test_with_arguments(self):
+        """Test with arguments specified.
 
-        script.transfer_input_files.append(
-            "/path/to/test_input_{macros[jobid]:04d}.txt")
+        """
+        self.script.arguments = "--in test_input.txt"
+        self.run_test(self.script)
 
-        script.transfer_output_files.append(
-            "/path/to/test_output_{macros[jobid]:04d}.txt")
+    def test_with_options(self):
+        """Test with Slurm options specified.
 
-        name = "test_job"
-        with tempfile.TemporaryDirectory(prefix="pyssub_") as dirname:
-            scriptfile = os.path.join(dirname, "script.json")
-            pyssub.sbatch.save(script, scriptfile)
+        """
+        self.script.options["ntasks"] = 1
+        self.run_test(self.script)
 
-            collection = [{
+    def test_with_transfer_input_files(self):
+        """Test with input files specified for transfer.
+
+        """
+        self.script.transfer_input_files.append("test_input.txt")
+        self.run_test(self.script)
+
+    def test_with_transfer_output_files(self):
+        """Test with output files specified for transfer.
+
+        """
+        self.script.transfer_output_files.append("test_output.txt")
+        self.run_test(self.script)
+
+
+class TestSBatchScriptEncoderException(unittest.TestCase):
+    """Test case for batch script encoder
+
+    Check if a `TypeError` is raised if an object of unknown type is
+    given to the batch script encoder.
+
+    """
+    def test_exception(self):
+        """Test for `TypeError`.
+
+        """
+        class DummyType:
+            """Some dummy class that JSON cannot encode."""
+
+        message = "Expect TypeError if an object of unkown type is given."
+
+        with self.assertRaises(TypeError, msg=message):
+            with tempfile.TemporaryDirectory(prefix="pyssub_") as dirname:
+                filename = os.path.join(dirname, "script.json")
+                pyssub.sbatch.save(DummyType(), filename)
+
+
+# ---Test cases for batch script collection------------------------------------
+class TestSBatchScriptCollection(unittest.TestCase):
+    """Test case for batch script collection
+
+    """
+    @classmethod
+    def setUpClass(cls):
+        cls.workdir = tempfile.TemporaryDirectory(prefix="pyssub_")
+        cls.scripts, cls.filename = cls.setup(cls.workdir.name)
+
+    @staticmethod
+    def setup(dirname):
+        """Test setup
+
+        Initialize batch script collection and save it to disk.
+
+        Parameters
+        ----------
+        dirname : str
+            Save batch script collection to this directory.
+
+        Returns
+        -------
+        scripts : dict(str, SBatchScriptMacro)
+            Initialized batch script collection
+        filename : str
+            Path to saved batch script collection
+
+        """
+        skeleton = pyssub.sbatch.SBatchScript(
+            executable="test_executable.py",
+            arguments="--in test_input_{macros[jobid]:03d}.txt")
+
+        skeleton.transfer_executable = True
+
+        skeleton.transfer_input_files.append(
+            "test_input_{macros[jobid]:03d}.txt")
+
+        skeleton.transfer_output_files.append(
+            "test_output_{macros[jobid]:03d}.txt")
+
+        scripts = {}
+        for jobid in range(100):
+            script = pyssub.sbatch.SBatchScriptMacro(
+                skeleton, macros={"jobid": jobid})
+
+            scripts["test_job_{:03d}".format(jobid)] = script
+
+        scriptfile = os.path.join(dirname, "script.json")
+        pyssub.sbatch.save(skeleton, scriptfile)
+
+        collection = []
+        for name, script in scripts.items():
+            collection.append({
                 "name": name,
                 "script": scriptfile,
-                "macros": {"jobid": 0}
-                }]
+                "macros": script.macros
+                })
 
-            filename = os.path.join(dirname, "collection.json")
-            with open(filename, "w") as stream:
-                json.dump(collection, stream)
+        filename = os.path.join(dirname, "collection.json")
+        with open(filename, "w") as stream:
+            json.dump(collection, stream)
 
-            collection = pyssub.sbatch.collection(filename)
+        return scripts, filename
 
-        self.assertEqual(collection, {name: self.script})
+    def test_default(self):
+        collection = pyssub.sbatch.collection(self.filename)
+        self.assertEqual(self.scripts, collection)
 
+    def test_with_rescue(self):
+        name = "test_job_000"
+        script = self.scripts.pop(name)
 
-if __name__ == "__main__":
-    # Run unit test.
-    unittest.main()
+        collection = pyssub.sbatch.collection(
+            self.filename, rescue=[name])
+
+        self.assertEqual(collection, {name: script})
