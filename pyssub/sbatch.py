@@ -38,7 +38,7 @@ class SBatchScript:
         self.arguments = arguments
 
         # Slurm sbatch options
-        self.options = {"ntasks": 1}
+        self.options = {}
 
         # File transfer mechanism
         self.transfer_executable = False
@@ -58,9 +58,6 @@ class SBatchScript:
         """dict(str, str): Script's description; will be inserted
         into `_skeleton` when script's string representation is called.
         """
-        # Make sure that this a single-task job.
-        self.options["ntasks"] = 1
-
         options = "\n".join(
             "#SBATCH --{key}={value}".format(key=k, value=v)
             for k, v in self.options.items())
@@ -140,7 +137,7 @@ class SBatchScriptEncoder(json.JSONEncoder):
         if isinstance(obj, SBatchScript):
             return self._encode(script=obj)
         else:
-            super().default(obj)
+            return super().default(obj)
 
     def _encode(self, script):
         """Encode the given Slurm batch script."""
