@@ -111,9 +111,13 @@ def failed(jobs):
         Mapping of names to IDs of the jobs that have failed
 
     """
-    jobids = ",".join("{}.batch".format(jobid) for jobid in jobs.values())
+    jobids = ["{}.batch".format(jobid) for jobid in jobs.values()]
+    width = max(len(jobid) for jobid in jobids)
 
-    command = ["sacct", "-j", jobids, "-n", "-o", "jobid,state"]
+    command = [
+        "sacct", "-j", ",".join(jobids), "-n",
+        "-o", "jobid%+{width},state%+9".format(width=width)
+        ]
 
     process = subprocess.run(
         command,
