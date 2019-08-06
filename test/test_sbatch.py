@@ -235,6 +235,52 @@ class TestSBatchScriptFailureNoOutputFile(unittest.TestCase, TestSBatchScript):
         cls.returncode = 1
 
 
+# ---Test case for batch script containing macros------------------------------
+class TestSBatchScriptMacro(unittest.TestCase):
+    """Test case for batch script containing macros
+
+    Create two scripts, one with and the other without macros. Specify
+    macro values that correspond to the script without macros and test
+    for scripts for equality.
+
+    """
+    def test_equality(self):
+        """Test scripts for equality.
+
+        """
+        # Batch script without macros.
+        script = pyssub.sbatch.SBatchScript(
+            executable="test_executable.py",
+            arguments="--in test_input_00.txt")
+
+        script.options["job-name"] = "test_00"
+
+        script.transfer_executable = True
+        script.transfer_input_files.append("test_input_00.txt")
+        script.transfer_output_files.append("test_output_00.txt")
+
+        # Same batch script with macros.
+        skeleton = pyssub.sbatch.SBatchScript(
+            executable="test_executable.py",
+            arguments="--in test_input_{macros[jobid]:02d}.txt")
+
+        skeleton.options["job-name"] = "test_{macros[jobid]:02d}"
+
+        skeleton.transfer_executable = True
+
+        skeleton.transfer_input_files.append(
+            "test_input_{macros[jobid]:02d}.txt")
+
+        skeleton.transfer_output_files.append(
+            "test_output_{macros[jobid]:02d}.txt")
+
+        other = pyssub.sbatch.SBatchScriptMacro(
+            script=skeleton, macros={"jobid": 0})
+
+        message = "The two Slurm batch scripts are not equal."
+        self.assertEqual(script, other, message)
+
+
 # ---Test cases for JSON-encoding and decoding batch scripts-------------------
 class TestSBatchScriptJSON(unittest.TestCase):
     """Test case for JSON-encoding and decoding batch scripts
@@ -255,8 +301,15 @@ class TestSBatchScriptJSON(unittest.TestCase):
         """
         with tempfile.TemporaryDirectory(prefix="pyssub_") as dirname:
             filename = os.path.join(dirname, "script.json")
-            pyssub.sbatch.save(self.script, filename)
-            other = pyssub.sbatch.load(filename)
+
+            with open(filename, "w") as stream:
+                json.dump(
+                    script, stream,
+                    cls=pyssub.sbatch.SBatchScriptEncoder)
+
+            with open(filename, "r") as stream:
+                other = json.load(
+                    stream, object_hook=pyssub.sbatch.SBatchScriptDecoder())
 
         message = "Batch script is not the same after saving and loading."
         self.assertEqual(other, script, message)
@@ -295,6 +348,17 @@ class TestSBatchScriptJSON(unittest.TestCase):
         self.script.transfer_output_files.append("test_output.txt")
         self.run_test(self.script)
 
+    def test_with_macros(self):
+        """Test with macro support.
+
+        """
+        self.script.arguments = "--in test_input_{macros[jobid]:02d}.txt"
+
+        script = pyssub.sbatch.SBatchScriptMacro(
+            self.script, macros={"jobid": 0})
+
+        self.run_test(script)
+
 
 class TestSBatchScriptEncoderException(unittest.TestCase):
     """Test case for batch script encoder
@@ -315,7 +379,11 @@ class TestSBatchScriptEncoderException(unittest.TestCase):
         with self.assertRaises(TypeError, msg=message):
             with tempfile.TemporaryDirectory(prefix="pyssub_") as dirname:
                 filename = os.path.join(dirname, "script.json")
-                pyssub.sbatch.save(DummyType(), filename)
+
+                with open(filename, "w") as stream:
+                    json.dump(
+                        DummyType(), stream,
+                        cls=pyssub.sbatch.SBatchScriptEncoder)
 
 
 # ---Test cases for batch script collection------------------------------------
@@ -367,17 +435,20 @@ class TestSBatchScriptCollection(unittest.TestCase):
             scripts["test_job_{:03d}".format(jobid)] = script
 
         scriptfile = os.path.join(dirname, "script.json")
-        pyssub.sbatch.save(skeleton, scriptfile)
 
-        collection = []
+        with open(scriptfile, "w") as stream:
+            json.dump(skeleton, stream, cls=pyssub.sbatch.SBatchScriptEncoder)
+
+        collection = {}
         for name, script in scripts.items():
-            collection.append({
+            collection[name] = {
                 "name": name,
                 "script": scriptfile,
                 "macros": script.macros
-                })
+                }
 
         filename = os.path.join(dirname, "collection.json")
+
         with open(filename, "w") as stream:
             json.dump(collection, stream)
 

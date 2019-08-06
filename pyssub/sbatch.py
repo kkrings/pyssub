@@ -129,18 +129,34 @@ class SBatchScriptEncoder(json.JSONEncoder):
     """JSON encoder for Slurm batch script
 
     This class provides a JSON-compatible representation of a Slurm
-    batch script.
+    batch script; both `SBatchScript` and `SBatchScriptMacro` are
+    supported.
 
     """
-    def default(self, obj):
+    def default(self, o):
         """Try to encode the given object."""
-        if isinstance(obj, SBatchScript):
-            return self._encode(script=obj)
-        else:
-            return super().default(obj)
+        if isinstance(o, SBatchScript):
+            return self._encode(o)
+
+        if isinstance(o, SBatchScriptMacro):
+            return {"script": self._encode(o.script), "macros": o.macros}
+
+        return super().default(o)
 
     def _encode(self, script):
-        """Encode the given Slurm batch script."""
+        """Encode Slurm batch script.
+
+        Parameters
+        ----------
+        script : SBatchScript
+            Slurm batch script
+
+        Returns
+        -------
+        dict
+            Script's JSON-compatible representation
+
+        """
         description = {"executable": script.executable}
 
         if len(script.arguments) > 0:
@@ -162,81 +178,99 @@ class SBatchScriptEncoder(json.JSONEncoder):
         return description
 
 
-def load(filename):
-    """Load Slurm batch script from disk.
+class SBatchScriptDecoder:
+    """JSON decoder for Slurm batch script
 
-    Load Slurm batch script from disk based on the JSON format:
-
-    .. code-block:: json
-
-        {
-            "executable": "command name or path to executable"
-            "arguments": "arguments the executable takes"
-            "transfer_executable": False
-            "options": {
-                "ntasks": 1
-            }
-            "transfer_input_files": [
-                "path to 1st input file",
-                "path to 2nd input file"
-            ]
-            "transfer_output_files": [
-                "path to 1st output file",
-                "path to 2nd output file"
-            ]
-        }
-
-    The ``executable`` key is the only mandatory one.
-
-    Parameters
-    ----------
-    filename : str
-        Path to saved Slurm batch script
-
-    Returns
-    -------
-    SBatchScript
-        Slurm batch script
+    This callable class can be used as an `object_hook` when loading a
+    JSON object from disk. All objects that represent a Slurm batch
+    script, with or without macros, are decoded into the corresponding
+    Python type.
 
     """
-    with open(filename, "r") as stream:
-        description = json.load(stream)
+    def __call__(self, jsonobject):
+        """Try to decode the given JSON object.
 
-    script = SBatchScript(
-        executable=description["executable"],
-        arguments=description.get("arguments", ""))
+        If the object contains ``script``, `decode_macro` is called. If
+        the object contains ``executable``, `decode` is called.
+        Otherwise, the object is untouched.
 
-    script.transfer_executable = description.get("transfer_executable", False)
+        Parameters
+        ----------
+        jsonobject : dict
+            JSON object
 
-    if "options" in description:
-        script.options.update(description["options"])
+        Returns
+        -------
+        Either decoded JSON object or JSON object itself
 
-    if "transfer_input_files" in description:
-        script.transfer_input_files.extend(
-            description["transfer_input_files"])
+        """
+        if "script" in jsonobject:
+            return self.decode_macro(description=jsonobject)
 
-    if "transfer_output_files" in description:
-        script.transfer_output_files.extend(
-            description["transfer_output_files"])
+        if "executable" in jsonobject:
+            return self.decode(description=jsonobject)
 
-    return script
+        return jsonobject
 
+    def decode(self, description):
+        """Decode Slurm batch script.
 
-def save(script, filename):
-    """Save Slurm batch script to disk.
+        Parameters
+        ----------
+        description : dict
+            Script's JSON-compatible representation
 
-    Save Slurm batch script to disk based on the JSON format.
+        Returns
+        -------
+        SBatchScript
+            Slurm batch script
 
-    Parameters
-    ----------
-    script : SBatchScript
-        Slurm batch script
-    filename : str
-        Path to output file
+        """
+        script = SBatchScript(
+            executable=description["executable"],
+            arguments=description.get("arguments", ""))
 
-    """
-    with open(filename, "w") as stream:
-        json.dump(script, stream, cls=SBatchScriptEncoder, indent=4)
+        script.transfer_executable = description.get(
+            "transfer_executable", False)
+
+        if "options" in description:
+            script.options.update(description["options"])
+
+        if "transfer_input_files" in description:
+            script.transfer_input_files.extend(
+                description["transfer_input_files"])
+
+        if "transfer_output_files" in description:
+            script.transfer_output_files.extend(
+                description["transfer_output_files"])
+
+        return script
+
+    def decode_macro(self, description):
+        """Decode Slurm batch script containing macros.
+
+        If ``script`` points to a string, it is interpreted as a path to
+        a JSON-encoded Slurm batch script on disk that will be loaded
+        and decoded.
+
+        Parameters
+        ----------
+        description : dict
+            Script's JSON-compatible representation
+
+        Returns
+        -------
+        SBatchScriptMacro
+            Slurm batch script
+
+        """
+        script = description["script"]
+
+        if isinstance(script, str):
+            with open(script, "r") as stream:
+                script = self.decode(json.load(stream))
+
+        return SBatchScriptMacro(script, macros=description["macros"])
 
 
 # ---Loading of Slurm batch script collection----------------------------------
@@ -278,18 +312,13 @@ def collection(filename, rescue=None):
 
     """
     with open(filename, "r") as stream:
-        descriptionlist = json.load(stream)
+        scripts = json.load(stream, object_hook=SBatchScriptDecoder())
 
-    scripts = {}
-    for description in descriptionlist:
-        name = description["name"]
-
-        if rescue is not None and name not in rescue:
-            continue
-
-        scripts[name] = SBatchScriptMacro(
-            script=load(description["script"]),
-            macros=description["macros"])
+    if rescue is not None:
+        scripts = {
+            name: script for name, script in scripts.items()
+            if name in rescue
+            }
 
     return scripts
 
