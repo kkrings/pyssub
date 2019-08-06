@@ -124,7 +124,7 @@ class SBatchScriptMacro:
         return str(self) == str(other)
 
 
-# ---Loading and saving Slurm batch script-------------------------------------
+# ---JSON support for Slurm batch script---------------------------------------
 class SBatchScriptEncoder(json.JSONEncoder):
     """JSON encoder for Slurm batch script
 
@@ -271,56 +271,6 @@ class SBatchScriptDecoder:
                 script = self.decode(json.load(stream))
 
         return SBatchScriptMacro(script, macros=description["macros"])
-
-
-# ---Loading of Slurm batch script collection----------------------------------
-def collection(filename, rescue=None):
-    """Load Slurm batch scripts from disk.
-
-    Load collection of Slurm batch scripts from disk based on the JSON
-    format:
-
-    .. code-block:: json
-
-        [
-            {
-                "name": "name of 1st job",
-                "script": "path to saved Slurm batch script"
-                "macros": {
-                    "name of 1st macro": "value of 1st macro",
-                    "name of 2nd macro": "value of 2nd macro"
-                }
-            }
-            {
-                "name": "name of 2nd job"
-                "script": "path to saved Slurm batch script"
-            }
-        ]
-
-    Parameters
-    ----------
-    filename : str
-        Path to saved collection of Slurm batch scripts
-    rescue : list(str), optional
-        Sequence of names of jobs that should be taken into account; all
-        others are ignored.
-
-    Returns
-    -------
-    dict(str, SBatchScriptMacro)
-        Mapping of job names to Slurm batch scripts
-
-    """
-    with open(filename, "r") as stream:
-        scripts = json.load(stream, object_hook=SBatchScriptDecoder())
-
-    if rescue is not None:
-        scripts = {
-            name: script for name, script in scripts.items()
-            if name in rescue
-            }
-
-    return scripts
 
 
 # ---Batch script skeleton-----------------------------------------------------

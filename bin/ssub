@@ -6,6 +6,7 @@ After your jobs are completed, you can check for failed jobs and save
 these to a rescue file via `rescue`.
 
 """
+import json
 import os
 import time
 
@@ -31,10 +32,14 @@ def submit(inputfile, outputfile,
     jobs are resubmitted.
 
     """
-    if rescue is not None:
-        rescue = list(pyssub.shist.load(rescue).keys())
+    with open(inputfile, "r") as stream:
+        scripts = json.load(
+            stream, object_hook=pyssub.sbatch.SBatchScriptDecoder())
 
-    scripts = pyssub.sbatch.collection(inputfile, rescue)
+    if rescue is not None:
+        rescue = pyssub.shist.load(rescue)
+        scripts = {k: v for k, v in scripts.items() if k in rescue}
+
     pyssub.shist.save(outputfile, jobs=sbatch(scripts, partition, nmax, wait))
 
 

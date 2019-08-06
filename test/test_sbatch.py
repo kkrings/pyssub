@@ -92,18 +92,11 @@ class Executable:
         if fail:
             arguments += " --fail"
 
-        macros = {
-            "inputfile": self.inputfile,
-            "outputfile": self.outputfile
-            }
+        script = pyssub.sbatch.SBatchScript(self.executable, arguments)
 
-        script = pyssub.sbatch.SBatchScriptMacro(
-            script=pyssub.sbatch.SBatchScript(self.executable, arguments),
-            macros=macros)
-
-        script.script.transfer_executable = True
-        script.script.transfer_input_files.append("{macros[inputfile]}")
-        script.script.transfer_output_files.append("{macros[outputfile]}")
+        script.transfer_executable = True
+        script.transfer_input_files.append(self.inputfile)
+        script.transfer_output_files.append(self.outputfile)
 
         scriptfile = os.path.join(self.workdir, "test_executable.sh")
 
@@ -281,7 +274,7 @@ class TestSBatchScriptMacro(unittest.TestCase):
         self.assertEqual(script, other, message)
 
 
-# ---Test cases for JSON-encoding and decoding batch scripts-------------------
+# ---Test cases for batch scripts' JSON support--------------------------------
 class TestSBatchScriptJSON(unittest.TestCase):
     """Test case for JSON-encoding and decoding batch scripts
 
@@ -386,33 +379,17 @@ class TestSBatchScriptEncoderException(unittest.TestCase):
                         cls=pyssub.sbatch.SBatchScriptEncoder)
 
 
-# ---Test cases for batch script collection------------------------------------
 class TestSBatchScriptCollection(unittest.TestCase):
     """Test case for batch script collection
 
+    Initialize both a collection of batch scripts and a corresponding
+    JSON object, save the JSON object to disk, load it again using the
+    custom JSON decoder for batch scripts, and test both the original
+    collection and the decoded collection for equality.
+
     """
-    @classmethod
-    def setUpClass(cls):
-        cls.workdir = tempfile.TemporaryDirectory(prefix="pyssub_")
-        cls.scripts, cls.filename = cls.setup(cls.workdir.name)
-
-    @staticmethod
-    def setup(dirname):
-        """Test setup
-
-        Initialize batch script collection and save it to disk.
-
-        Parameters
-        ----------
-        dirname : str
-            Save batch script collection to this directory.
-
-        Returns
-        -------
-        scripts : dict(str, SBatchScriptMacro)
-            Initialized batch script collection
-        filename : str
-            Path to saved batch script collection
+    def test_equality(self):
+        """Test batch script collections for equality.
 
         """
         skeleton = pyssub.sbatch.SBatchScript(
@@ -434,35 +411,30 @@ class TestSBatchScriptCollection(unittest.TestCase):
 
             scripts["test_job_{:03d}".format(jobid)] = script
 
-        scriptfile = os.path.join(dirname, "script.json")
+        with tempfile.TemporaryDirectory(prefix="pyssub_") as dirname:
+            scriptfile = os.path.join(dirname, "script.json")
 
-        with open(scriptfile, "w") as stream:
-            json.dump(skeleton, stream, cls=pyssub.sbatch.SBatchScriptEncoder)
+            with open(scriptfile, "w") as stream:
+                json.dump(
+                    skeleton, stream,
+                    cls=pyssub.sbatch.SBatchScriptEncoder)
 
-        collection = {}
-        for name, script in scripts.items():
-            collection[name] = {
-                "name": name,
-                "script": scriptfile,
-                "macros": script.macros
-                }
+            collection = {}
+            for name, script in scripts.items():
+                collection[name] = {
+                    "name": name,
+                    "script": scriptfile,
+                    "macros": script.macros
+                    }
 
-        filename = os.path.join(dirname, "collection.json")
+            filename = os.path.join(dirname, "collection.json")
 
-        with open(filename, "w") as stream:
-            json.dump(collection, stream)
+            with open(filename, "w") as stream:
+                json.dump(collection, stream)
 
-        return scripts, filename
+            with open(filename, "r") as stream:
+                other = json.load(
+                    stream, object_hook=pyssub.sbatch.SBatchScriptDecoder())
 
-    def test_default(self):
-        collection = pyssub.sbatch.collection(self.filename)
-        self.assertEqual(self.scripts, collection)
-
-    def test_with_rescue(self):
-        name = "test_job_000"
-        script = self.scripts.pop(name)
-
-        collection = pyssub.sbatch.collection(
-            self.filename, rescue=[name])
-
-        self.assertEqual(collection, {name: script})
+        message = "The two batch script collections are not equal."
+        self.assertEqual(scripts, other, message)
