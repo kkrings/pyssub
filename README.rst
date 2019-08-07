@@ -1,5 +1,5 @@
-pyssub
-======
+Slurm job submission in Python
+==============================
 
 This package provides a thin Python layer on top of the `Slurm`_ workload
 manager for submitting Slurm batch scripts into a Slurm queue. It's core
@@ -13,7 +13,7 @@ features are:
    * successive submission of Slurm batch scripts, and
    * rescue of failed jobs.
 
-Checkout the `pyssub`_ documentation.
+Checkout `pyssub`_'s documentation.
 
 .. _Slurm:
    https://slurm.schedmd.com/documentation.html
