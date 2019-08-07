@@ -1,7 +1,7 @@
 .. pyssub documentation master file
 
-pyssub
-======
+Slurm job submission in Python
+==============================
 
 This package provides a thin Python layer on top of the `Slurm`_ workload
 manager for submitting Slurm batch scripts into a Slurm queue. It's core
