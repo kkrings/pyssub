@@ -80,5 +80,5 @@ executable and the input file should be copied to the computing node.
          --out pyssub_example.out \
          --rescue pyssub_example.rescue
 
-The :ref:`advanced_example` page shows how to create a collection of batch
-scripts via a Python script.
+The :ref:`advanced_example` page shows how to create the same collection of
+batch scripts via a Python script.
