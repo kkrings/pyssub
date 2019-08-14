@@ -79,3 +79,6 @@ executable and the input file should be copied to the computing node.
          --in pyssub_example.jobs \
          --out pyssub_example.out \
          --rescue pyssub_example.rescue
+
+The :ref:`advanced_example` page shows how to create a collection of batch
+scripts via a Python script.
