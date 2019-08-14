@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Module containing functions wrapping Slurm commands.
+"""Module containing functions wrapping Slurm commands
 
 """
 import os

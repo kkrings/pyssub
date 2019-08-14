@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Module containing classes representing a Slurm batch script
+"""Module containing classes representing a Slurm batch script and
+corresponding JSON encoder and decoder
 
 """
 import json
@@ -21,9 +22,10 @@ class SBatchScript:
     arguments : str
         Arguments that will be passed to `executable`
     options : dict(str, object)
-        Mapping of sbatch options to objects representing values
+        Mapping of sbatch options to objects (string-) representing
+        values
     transfer_executable : bool
-        Transfer `executable` to node
+        Transfer `executable` to node.
     transfer_input_files : list(str)
         Sequence of input files that are copied to the node before
         executing `executable`
@@ -94,7 +96,7 @@ class SBatchScriptMacro:
         Slurm batch script containing macros
     macros : dict(str, object)
         Macro values that are inserted into the script when the script's
-        string representation is called.
+        string representation is called
 
     Examples
     --------
