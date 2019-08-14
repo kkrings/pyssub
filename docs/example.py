@@ -3,8 +3,8 @@
 
 """
 Create a collection of Slurm batch scripts for executing an executable
-on a Slurm cluster. Each job has the macros job name ``jobname``, and
-job ID ``jobid``, which can be passed to the executable and/or the file
+on a Slurm cluster. Each job has the macros job name ``jobname`` and job
+ID ``jobid``, which can be passed to the executable and/or the file
 transfer mechanism.
 
 """
