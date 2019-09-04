@@ -69,7 +69,7 @@ executable and the input file should be copied to the computing node.
       }
 
    The collection is a mapping of job names to JSON objects that contain
-   the *absolute* path to the batch script skeleton and the macro values that
+   the **absolute** path to the batch script skeleton and the macro values that
    will be injected into the skeleton.
 
    .. note::
@@ -79,7 +79,12 @@ executable and the input file should be copied to the computing node.
       via the Slurm option ``job-name``. In the example above, this is achieved
       with the help of the macro ``jobname``.
 
-#. Submit the batch script collection via `ssub`:
+#. Submit the batch script collection via `ssub`.
+   The `ssub` command also allows you to control the maximum allowed number of
+   queuing jobs (the default is 1000) and to specify how long it should wait
+   before trying to submit more jobs into the queue (the default is 120
+   seconds). The output file `pyssub_example.out` will contain the job name and
+   job ID of each submitted job.
 
    .. code-block:: sh
 
@@ -87,25 +92,17 @@ executable and the input file should be copied to the computing node.
          --in pyssub_example.json \
          --out pyssub_example.out
 
-   The `ssub` command also allows you to control the maximum allowed number of
-   queuing jobs (the default is 1000) and to specify how long it should wait
-   before trying to submit more jobs into the queue (the default is 120
-   seconds). The output file `pyssub_example.out` will contain a table of job
-   names and job IDs of each submitted job.
-
 #. After your jobs are done, collect the failed ones.
-
+   This feature requires the ``sacct`` command to be available, which allows to
+   query the Slurm job database. It will query the status of each job listed
+   in `pyssub_example.out`` and save the job name and job ID of each finished
+   job that has failed.
 
    .. code-block:: sh
 
       ssub rescue \
          --in pyssub_example.out \
          --out pyssub_example.rescue
-
-   This feature requires the ``sacct`` command to be available, which allows to
-   query the Slurm job database. It will query the status of each job listed
-   in `pyssub_example.out`` and save the job name and job ID of each finished
-   job that has failed.
 
 #. If the jobs have failed because of temporary problems with the computing
    node for example, you can simply resubmit only the failed jobs:
