@@ -114,19 +114,25 @@ def failed(jobs):
     jobids = ["{}.batch".format(jobid) for jobid in jobs.values()]
     width = max(len(jobid) for jobid in jobids)
 
-    command = [
-        "sacct", "-j", ",".join(jobids), "-n",
-        "-o", "jobid%+{width},state%+9".format(width=width)
-        ]
+    # Check for completed jobs in chunks of 1000 job IDs. Otherwise, sacct
+    # could fail if the string of comma-separated job IDs is too long.
+    completed = []
+    for start in range(0, len(jobids), 1000):
+        select = slice(start, start+1000)
 
-    process = subprocess.run(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=True,
-        encoding="utf-8")
+        command = [
+            "sacct", "-j", ",".join(jobids[select]), "-n",
+            "-o", "jobid%+{width},state%+9".format(width=width)
+            ]
 
-    completed = [line.split() for line in process.stdout.splitlines()]
+        process = subprocess.run(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+            encoding="utf-8")
+
+        completed.extend(line.split() for line in process.stdout.splitlines())
 
     pattern = re.compile(r"(?P<jobid>\d+).batch")
 
