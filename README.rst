@@ -39,6 +39,14 @@ package directly from `GitHub`_:
    pip install 'git+https://github.com/kkrings/pyssub#egg=pyssub'
 
 
+Contributing
+------------
+
+I welcome input from your side, either by creating `issues`_ or via `pull
+reqests`_. For the latter, please make sure that all unit tests pass. The unit
+tests can be executed via :code:`python setup.py test`.
+
+
 .. External links
 .. _Slurm:
    https://slurm.schedmd.com/
@@ -57,3 +65,9 @@ package directly from `GitHub`_:
 
 .. _GitHub:
    https://github.com/kkrings/pyssub
+
+.. _issues:
+   https://github.com/kkrings/pyssub/issues
+
+.. _pull reqests:
+   https://github.com/kkrings/pyssub/pulls
