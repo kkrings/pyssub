@@ -34,6 +34,15 @@ content:
 
 A more detailed introduction is given in the `Getting started`_ guide.
 
+.. note::
+
+   I have written this package because I was working with a small Slurm cluster
+   during my PhD. This cluster was configured in a way that the easiest
+   approach was to submit multiple single-task Slurm batch scripts instead of a
+   single multi-task Slurm batch script containing multiple *srun* commands.
+   The package reflects this approach and therefore does not have to be the
+   best solution for your cluster.
+
 
 Installation
 ------------
