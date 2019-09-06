@@ -24,7 +24,7 @@ package (requires at least Python 3.6), which does not depend on any external
 package. It is very likely that you want to install `pyssub` into its own
 virtual Python environment (e.g. via `virtualenvwrapper`_):
 
-.. code::
+.. code:: bash
 
    source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
    mkvirtualenv -p /usr/bin/python3.6 py3-slurm -i pyssub
