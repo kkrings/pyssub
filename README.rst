@@ -15,19 +15,29 @@ features are:
 
 Checkout `pyssub`_'s documentation.
 
+
 Installation
 ------------
 
-All releases of `pyssub` are uploaded to `PyPI`_ and the newest release can be
-installed via :code:`pip install pyssub`. Note that `pyssub` is a pure Python 3
-package (requires at least Python 3.6), which does not depend on any external
-package. It is very likely that you want to install `pyssub` into its own
-virtual Python environment (e.g. via `virtualenvwrapper`_):
+This package is pure Python 3 (it requires at least Python 3.6) and does not
+depend on any external package. All releases are uploaded to `PyPI`_ and the
+newest release can be installed via :code:`pip install pyssub`.
+
+I would recommend to create a dedicated virtual Python 3 environment for the
+installation (e.g.  via `virtualenvwrapper`_):
 
 .. code:: bash
 
    source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
-   mkvirtualenv -p /usr/bin/python3.6 py3-slurm -i pyssub
+   mkvirtualenv -p /usr/bin/python3.6 -i pyssub py3-slurm
+
+If you prefer to work with the newest revision, you can also install the
+package directly from `GitHub`_:
+
+.. code:: bash
+
+   pip install 'git+https://github.com/kkrings/pyssub#egg=pyssub'
+
 
 .. External links
 .. _Slurm:
@@ -44,3 +54,6 @@ virtual Python environment (e.g. via `virtualenvwrapper`_):
 
 .. _virtualenvwrapper:
    https://virtualenvwrapper.readthedocs.io/
+
+.. _GitHub:
+   https://github.com/kkrings/pyssub
