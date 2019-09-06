@@ -31,6 +31,6 @@ setuptools.setup(
         "Topic :: Scientific/Engineering"
         ],
     python_requires=">=3.6",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=["tests"]),
     scripts=["scripts/ssub"],
     test_suite="tests")
