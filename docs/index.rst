@@ -24,14 +24,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-.. external links
-
-.. _Slurm:
-   https://slurm.schedmd.com/documentation.html
-
-.. _JSON:
-   https://www.json.org/
-
-.. _GitHub:
-   https://github.com/kkrings/pyssub

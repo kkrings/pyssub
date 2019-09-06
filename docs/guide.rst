@@ -86,7 +86,7 @@ executable and the input file should be copied to the computing node.
    seconds). The output file `pyssub_example.out` will contain the job name and
    job ID of each submitted job.
 
-   .. code-block:: sh
+   ::
 
       ssub submit \
          --in pyssub_example.json \
@@ -98,7 +98,7 @@ executable and the input file should be copied to the computing node.
    in `pyssub_example.out`` and save the job name and job ID of each finished
    job that has failed.
 
-   .. code-block:: sh
+   ::
 
       ssub rescue \
          --in pyssub_example.out \
@@ -107,7 +107,7 @@ executable and the input file should be copied to the computing node.
 #. If the jobs have failed because of temporary problems with the computing
    node for example, you can simply resubmit only the failed jobs:
 
-   .. code-block:: sh
+   ::
 
       ssub submit \
          --in pyssub_example.json \

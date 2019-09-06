@@ -16,7 +16,7 @@ features are:
 The example shows how to submit a JSON-encoded Slurm batch script into a Slurm
 queue via *ssub*:
 
-.. code:: bash
+::
 
    ssub submit --in pyssub_example.json --out pyssub_example.out
 
@@ -42,14 +42,14 @@ This package is pure Python 3 package (it requires at least Python 3.6) and
 does not depend on any third-party package. All releases are uploaded
 to `PyPI`_ and the newest release can be installed via
 
-.. code:: bash
+::
 
    pip install pyssub
 
 I would recommend to create a dedicated virtual Python 3 environment for the
 installation (e.g.  via `virtualenvwrapper`_):
 
-.. code:: bash
+::
 
    source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
    mkvirtualenv -p /usr/bin/python3.6 -i pyssub py3-slurm
@@ -57,7 +57,7 @@ installation (e.g.  via `virtualenvwrapper`_):
 If you prefer to work with the newest revision, you can also install the
 package directly from `GitHub`_:
 
-.. code:: bash
+::
 
    pip install 'git+https://github.com/kkrings/pyssub#egg=pyssub'
 
@@ -69,7 +69,7 @@ I welcome input from your side, either by creating `issues`_ or via `pull
 reqests`_. For the latter, please make sure that all unit tests pass. The unit
 tests can be executed via
 
-.. code:: bash
+::
 
    python setup.py test
 

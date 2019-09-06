@@ -7,7 +7,7 @@ Advanced example
 Following up the :ref:`getting-started-guide` guide, this more advanced example
 shows how to create the same collection of batch scripts via a Python script.
 
-.. code-block:: sh
+::
 
    ./example.py \
       --sbatch-name pyssub_example \
