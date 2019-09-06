@@ -9,19 +9,39 @@ features are:
 * simple file transfer mechanism between shared file system and node,
 * macro support based Python's format specification mini-language,
 * `JSON`_-encoding and decoding of Slurm batch scripts,
-* new submission command `ssub`,
+* new submission command *ssub*,
 * successive submission of Slurm batch scripts, and
 * rescue of failed jobs.
 
-Checkout `pyssub`_'s documentation.
+The example shows how to submit a JSON-encoded Slurm batch script into a Slurm
+queue via *ssub*:
+
+.. code:: bash
+
+   ssub submit --in pyssub_example.json --out pyssub_example.out
+
+The JSON-encoded Slurm batch script *pyssub_example.json* has the following
+content:
+
+.. code:: json
+
+   {
+      "pyssub_example": {
+         "executable": "echo",
+         "arguments": "'Hello World!'"
+      }
+   }
+
+A more detailed introduction is given in the `Getting started` guide.
 
 
 Installation
 ------------
 
-This package is pure Python 3 (it requires at least Python 3.6) and does not
-depend on any external package. All releases are uploaded to `PyPI`_ and the
-newest release can be installed via :code:`pip install pyssub`.
+This package is pure Python 3 package (it requires at least Python 3.6) and
+does not depend on any third-party package. All releases are uploaded
+to `PyPI`_ and the newest release can be installed via :code:`pip install
+pyssub`.
 
 I would recommend to create a dedicated virtual Python 3 environment for the
 installation (e.g.  via `virtualenvwrapper`_):
@@ -54,8 +74,8 @@ tests can be executed via :code:`python setup.py test`.
 .. _JSON:
    https://www.json.org/
 
-.. _pyssub:
-   https://pyssub.readthedocs.io/
+.. _Getting started:
+   https://pyssub.readthedocs.io/en/latest/guide.html
 
 .. _PyPI:
    https://pypi.org/project/pyssub/
