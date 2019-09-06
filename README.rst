@@ -16,10 +16,10 @@ features are:
 Checkout `pyssub`_'s documentation.
 
 .. _Slurm:
-   https://slurm.schedmd.com/documentation.html
+   https://slurm.schedmd.com/
 
 .. _JSON:
    https://www.json.org/
 
 .. _pyssub:
-   https://pyssub.readthedocs.io/en/latest/contents.html
+   https://pyssub.readthedocs.io/
