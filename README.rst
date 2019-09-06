@@ -13,6 +13,12 @@ features are:
 * successive submission of Slurm batch scripts, and
 * rescue of failed jobs.
 
+Installation
+------------
+
+All releases of :mod:`pyssub` are uploaded to `PyPI`_ and the newest release
+can simply be installed via :code:`pip install pyssub`.
+
 Checkout `pyssub`_'s documentation.
 
 .. _Slurm:
@@ -23,3 +29,6 @@ Checkout `pyssub`_'s documentation.
 
 .. _pyssub:
    https://pyssub.readthedocs.io/
+
+.. _PyPI:
+   https://pypi.org/project/pyssub/
