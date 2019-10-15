@@ -4,16 +4,23 @@
 import setuptools
 
 
-with open("README.rst") as readme:
-    long_description = readme.read()
+description = "Slurm job submission in Python"
+
+long_description = [description, "\n", "=" * len(description), "\n"]
+
+with open("README.rst") as stream:
+    readme = stream.readlines()
+
+select = slice(readme.index(".. documentation start\n") + 1, None)
+long_description.extend(readme[select])
 
 setuptools.setup(
     name="pyssub",
     version="0.1",
     author="Kai Krings",
     author_email="kai.krings@posteo.de",
-    description="Slurm job submission in Python",
-    long_description=long_description,
+    description=description,
+    long_description="".join(long_description),
     long_description_content_type="text/x-rst",
     url="https://github.com/kkrings/pyssub/",
     project_urls={
