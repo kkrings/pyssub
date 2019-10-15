@@ -1,6 +1,11 @@
 Slurm job submission in Python
 ==============================
 
+.. image:: https://travis-ci.org/kkrings/pyssub.svg?branch=master
+   :target: https://travis-ci.org/kkrings/pyssub
+
+.. documentation start
+
 This package provides a thin Python layer on top of the `Slurm`_ workload
 manager for submitting Slurm batch scripts into a Slurm queue. Its core
 features are:

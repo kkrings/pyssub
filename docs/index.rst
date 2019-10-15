@@ -1,6 +1,10 @@
 .. pyssub documentation master file
 
+Slurm job submission in Python
+==============================
+
 .. include:: ../README.rst
+   :start-after: documentation start
 
 .. toctree::
    :maxdepth: 1
