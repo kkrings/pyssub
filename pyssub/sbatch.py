@@ -5,6 +5,7 @@ corresponding JSON encoder and decoder
 
 """
 import json
+from typing import Any, Dict, List
 
 
 # ---Slurm batch script--------------------------------------------------------
@@ -21,43 +22,43 @@ class SBatchScript:
         Path to executable
     arguments : str
         Arguments that will be passed to `executable`
-    options : dict(str, object)
+    options : Dict[str, Any]
         Mapping of sbatch options to objects (string-) representing
         values
     transfer_executable : bool
         Transfer `executable` to node.
-    transfer_input_files : list(str)
+    transfer_input_files : List[str]
         Sequence of input files that are copied to the node before
         executing `executable`
-    transfer_output_files : list(str)
+    transfer_output_files : List[str]
         Sequence of output files that are moved after
         executing `executable`
 
     """
-    def __init__(self, executable, arguments=""):
+    def __init__(self, executable: str, arguments: str = "") -> None:
         # Executable and arguments
         self.executable = executable
         self.arguments = arguments
 
         # Slurm sbatch options
-        self.options = {}
+        self.options: Dict[str, Any] = {}
 
         # File transfer mechanism
         self.transfer_executable = False
-        self.transfer_input_files = []
-        self.transfer_output_files = []
+        self.transfer_input_files: List[str] = []
+        self.transfer_output_files: List[str] = []
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Script's string representation"""
         return _skeleton.format(descr=self._description)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Compare to other script."""
         return str(self) == str(other)
 
     @property
-    def _description(self):
-        """dict(str, str): Script's description; will be inserted
+    def _description(self) -> Dict[str, str]:
+        """Dict[str, str]: Script's description; will be inserted
         into `_skeleton` when script's string representation is called.
         """
         options = "\n".join(
@@ -94,7 +95,7 @@ class SBatchScriptMacro:
     ----------
     script : SBatchScript
         Slurm batch script containing macros
-    macros : dict(str, object)
+    macros : Dict[str, Any]
         Macro values that are inserted into the script when the script's
         string representation is called
 
@@ -106,11 +107,11 @@ class SBatchScriptMacro:
     >>> script = SBatchScriptMacro(skeleton, {"msg": "Hello World!"})
 
     """
-    def __init__(self, script, macros):
+    def __init__(self, script: SBatchScript, macros: Dict[str, Any]) -> None:
         self.script = script
         self.macros = macros
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Script's string representation"""
         description = self.script._description
 
@@ -121,7 +122,7 @@ class SBatchScriptMacro:
 
         return _skeleton.format(descr=description)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Compare to other script."""
         return str(self) == str(other)
 
@@ -135,7 +136,7 @@ class SBatchScriptEncoder(json.JSONEncoder):
     supported.
 
     """
-    def default(self, o):
+    def default(self, o: Any):
         """Try to encode the given object."""
         if isinstance(o, SBatchScript):
             return self._encode(o)
@@ -145,7 +146,7 @@ class SBatchScriptEncoder(json.JSONEncoder):
 
         return super().default(o)
 
-    def _encode(self, script):
+    def _encode(self, script: SBatchScript) -> Dict[str, Any]:
         """Encode Slurm batch script.
 
         Parameters
@@ -155,11 +156,13 @@ class SBatchScriptEncoder(json.JSONEncoder):
 
         Returns
         -------
-        dict
+        Dict[str, Any]
             Script's JSON-compatible representation
 
         """
-        description = {"executable": script.executable}
+        description: Dict[str, Any] = {
+            "executable": script.executable
+            }
 
         if len(script.arguments) > 0:
             description["arguments"] = script.arguments
@@ -189,7 +192,7 @@ class SBatchScriptDecoder:
     Python type.
 
     """
-    def __call__(self, jsonobject):
+    def __call__(self, jsonobject: Dict[str, Any]) -> Any:
         """Try to decode the given JSON object.
 
         If the object contains ``script``, `decode_macro` is called. If
@@ -198,7 +201,7 @@ class SBatchScriptDecoder:
 
         Parameters
         ----------
-        jsonobject : dict
+        jsonobject : Dict[str, Any]
             JSON object
 
         Returns
@@ -214,12 +217,12 @@ class SBatchScriptDecoder:
 
         return jsonobject
 
-    def decode(self, description):
+    def decode(self, description: Dict[str, Any]) -> SBatchScript:
         """Decode Slurm batch script.
 
         Parameters
         ----------
-        description : dict
+        description : Dict[str, Any]
             Script's JSON-compatible representation
 
         Returns
@@ -248,7 +251,7 @@ class SBatchScriptDecoder:
 
         return script
 
-    def decode_macro(self, description):
+    def decode_macro(self, description: Dict[str, Any]) -> SBatchScriptMacro:
         """Decode Slurm batch script containing macros.
 
         If ``script`` points to a string, it is interpreted as a path to
@@ -257,7 +260,7 @@ class SBatchScriptDecoder:
 
         Parameters
         ----------
-        description : dict
+        description : Dict[str, Any]
             Script's JSON-compatible representation
 
         Returns
