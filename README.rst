@@ -17,13 +17,13 @@ features are:
 
 * Python classes representing a Slurm batch script,
 * simple file transfer mechanism between shared file system and node,
-* macro support based Python's format specification mini-language,
+* macro support based on Python's format specification mini-language,
 * `JSON`_-encoding and decoding of Slurm batch scripts,
 * new submission command *ssub*,
 * successive submission of Slurm batch scripts, and
 * rescue of failed jobs.
 
-The example shows how to submit a JSON-encoded Slurm batch script into a Slurm
+This example shows how to submit a JSON-encoded Slurm batch script into a Slurm
 queue via *ssub*:
 
 ::
@@ -44,18 +44,21 @@ content:
 
 A more detailed introduction is given in the `Getting started`_ guide.
 
-Note that I have written this package because I was working with a small Slurm
-cluster during my PhD. This cluster was configured in a way that the easiest
-approach was to submit multiple single-task Slurm batch scripts instead of a
-single multi-task Slurm batch script containing multiple *srun* commands. The
-package reflects this approach and therefore does not have to be the best
-solution for your cluster.
+Note
+----
+
+I have written this package because I was working with a small Slurm cluster
+during my PhD. This cluster was configured in a way that the easiest approach
+was to submit multiple single-task Slurm batch scripts instead of a single
+multi-task Slurm batch script containing multiple *srun* commands. The package
+reflects this approach and therefore does not have to be the best solution for
+your cluster.
 
 
 Installation
 ------------
 
-This package is pure Python 3 package (it requires at least Python 3.6) and
+This package is a pure Python 3 package (it requires at least Python 3.6) and
 does not depend on any third-party package. All releases are uploaded
 to `PyPI`_ and the newest release can be installed via
 
@@ -83,7 +86,7 @@ Contributing
 ------------
 
 I welcome input from your side, either by creating `issues`_ or via `pull
-reqests`_. For the latter, please make sure that all unit tests pass. The unit
+requests`_. For the latter, please make sure that all unit tests pass. The unit
 tests can be executed via
 
 ::
@@ -113,5 +116,5 @@ tests can be executed via
 .. _issues:
    https://github.com/kkrings/pyssub/issues
 
-.. _pull reqests:
+.. _pull requests:
    https://github.com/kkrings/pyssub/pulls
