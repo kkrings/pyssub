@@ -3,9 +3,10 @@
 """Slurm job history: save/load names and IDs of submitted jobs
 
 """
+from typing import Dict
 
 
-def load(filename):
+def load(filename: str) -> Dict[str, int]:
     """Load Slurm jobs from disk.
 
     Load names and IDs of submitted Slurm jobs from disk.
@@ -37,7 +38,7 @@ def load(filename):
     return dict(zip(jobnames, jobids))
 
 
-def save(filename, jobs):
+def save(filename: str, jobs: Dict[str, int]) -> None:
     """Save Slurm jobs to disk.
 
     Save names and IDs of submitted Slurm jobs to disk.
