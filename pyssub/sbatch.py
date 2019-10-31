@@ -22,15 +22,15 @@ class SBatchScript:
         Path to executable
     arguments : str
         Arguments that will be passed to `executable`
-    options : Dict[str, Any]
+    options : dict(str, object)
         Mapping of sbatch options to objects (string-) representing
         values
     transfer_executable : bool
         Transfer `executable` to node.
-    transfer_input_files : List[str]
+    transfer_input_files : list(str)
         Sequence of input files that are copied to the node before
         executing `executable`
-    transfer_output_files : List[str]
+    transfer_output_files : list(str)
         Sequence of output files that are moved after
         executing `executable`
 
@@ -52,13 +52,13 @@ class SBatchScript:
         """Script's string representation"""
         return _skeleton.format(descr=self._description)
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         """Compare to other script."""
         return str(self) == str(other)
 
     @property
     def _description(self) -> Dict[str, str]:
-        """Dict[str, str]: Script's description; will be inserted
+        """dict(str, str): Script's description; will be inserted
         into `_skeleton` when script's string representation is called.
         """
         options = "\n".join(
@@ -95,7 +95,7 @@ class SBatchScriptMacro:
     ----------
     script : SBatchScript
         Slurm batch script containing macros
-    macros : Dict[str, Any]
+    macros : dict(str, object)
         Macro values that are inserted into the script when the script's
         string representation is called
 
@@ -122,7 +122,7 @@ class SBatchScriptMacro:
 
         return _skeleton.format(descr=description)
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         """Compare to other script."""
         return str(self) == str(other)
 
@@ -136,7 +136,7 @@ class SBatchScriptEncoder(json.JSONEncoder):
     supported.
 
     """
-    def default(self, o: Any):
+    def default(self, o: Any) -> Dict[str, Any]:
         """Try to encode the given object."""
         if isinstance(o, SBatchScript):
             return self._encode(o)
@@ -156,7 +156,7 @@ class SBatchScriptEncoder(json.JSONEncoder):
 
         Returns
         -------
-        Dict[str, Any]
+        dict(str, object)
             Script's JSON-compatible representation
 
         """
@@ -201,12 +201,13 @@ class SBatchScriptDecoder:
 
         Parameters
         ----------
-        jsonobject : Dict[str, Any]
+        jsonobject : dict(str, object)
             JSON object
 
         Returns
         -------
-        Either decoded JSON object or JSON object itself
+        object
+            Either decoded JSON object or JSON object itself
 
         """
         if "script" in jsonobject:
@@ -222,7 +223,7 @@ class SBatchScriptDecoder:
 
         Parameters
         ----------
-        description : Dict[str, Any]
+        description : dict(str, object)
             Script's JSON-compatible representation
 
         Returns
@@ -260,7 +261,7 @@ class SBatchScriptDecoder:
 
         Parameters
         ----------
-        description : Dict[str, Any]
+        description : dict(str, object)
             Script's JSON-compatible representation
 
         Returns
