@@ -40,5 +40,7 @@ setuptools.setup(
         ],
     python_requires=">=3.6",
     packages=setuptools.find_packages(exclude=["tests"]),
+    package_data={"pyssub": ["py.typed"]},
     scripts=["scripts/ssub"],
-    test_suite="tests")
+    test_suite="tests",
+    zip_safe=False)
