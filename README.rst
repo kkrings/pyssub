@@ -1,8 +1,8 @@
 Slurm job submission in Python
 ==============================
 
-.. image:: https://travis-ci.org/kkrings/pyssub.svg?branch=master
-   :target: https://travis-ci.org/kkrings/pyssub
+.. image:: https://travis-ci.com/kkrings/pyssub.svg?branch=master
+   :target: https://travis-ci.com/kkrings/pyssub
    :alt: Build status
 
 .. image:: https://readthedocs.org/projects/pyssub/badge/?version=latest
